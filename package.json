@@ -1,0 +1,30 @@
+{
+  "name": "carlosromanxyz-obs-studio",
+  "version": "1.0.0",
+  "description": "OBS Studio streaming widgets with HTML/Tailwind CSS - Pure HTML widgets for browser sources and dock control panels",
+  "main": "server/serve.js",
+  "scripts": {
+    "start": "node server/serve.js",
+    "serve": "node server/serve.js",
+    "serve:python": "python3 server/serve.py"
+  },
+  "keywords": [
+    "obs",
+    "obs-studio",
+    "streaming",
+    "overlay",
+    "widgets",
+    "browser-source",
+    "dock",
+    "tailwindcss"
+  ],
+  "author": "Carlos Román <carlosromanxyz>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/carlosromanxyz/carlosromanxyz-obs-studio.git"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

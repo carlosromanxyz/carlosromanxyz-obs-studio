@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logo Overlay</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#b1d900',
+            'brand-accent': '#82a000',
+            'brand-dark': '#5c7000',
+            'brand-darker': '#525252',
+            'brand-black': '#000000',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* Pulse animation for dots */
+    @keyframes pulse-scale {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    .pulse-dot {
+      animation: pulse-scale 2s ease-in-out infinite;
+    }
+
+    .pulse-dot:nth-child(2) {
+      animation-delay: 0.5s;
+    }
+
+    /* Smooth transitions */
+    .logo-transition {
+      transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+    }
+
+    .text-transition {
+      transition: opacity 0.4s ease-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Logo Container -->
+  <div id="logo-container" class="fixed top-32 right-28" style="width: 200px; height: 48px; transform: scale(2); transform-origin: right top;">
+
+    <!-- Logo Circle (moves left when text appears) -->
+    <div id="logo-circle" class="absolute top-0 right-0 logo-transition" style="transform: translateX(0);">
+      <div class="relative h-12 w-12">
+
+        <!-- LAYER 1: Green border circle -->
+        <div class="absolute inset-0 rounded-full bg-brand-primary"></div>
+
+        <!-- LAYER 2: Gray background (creates border effect) -->
+        <div class="absolute inset-0.5 rounded-full bg-brand-darker flex items-center justify-center">
+
+          <!-- LAYER 3 & 4: Center dots (pulsing) -->
+          <span class="flex items-center justify-center gap-1.5">
+            <div class="w-1.5 h-1.5 rounded-full bg-brand-primary pulse-dot"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-brand-primary pulse-dot"></div>
+          </span>
+
+          <!-- LAYER 5: Left brace -->
+          <span class="absolute text-white text-lg left-1 font-semibold" style="top: 50%; transform: translateY(-50%); font-family: Raleway, sans-serif;">
+            {
+          </span>
+
+          <!-- LAYER 6: Right brace -->
+          <span class="absolute text-white text-lg right-1 font-semibold" style="top: 50%; transform: translateY(-50%); font-family: Raleway, sans-serif;">
+            }
+          </span>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Text Content (hidden by default) -->
+    <div id="logo-text" class="absolute top-0 right-0 flex flex-col justify-center items-start h-12 text-transition" style="white-space: nowrap; opacity: 0;">
+
+      <!-- Name -->
+      <h1 class="uppercase flex gap-0.5 tracking-tight leading-none text-base text-white" style="font-family: Barlow, sans-serif;">
+        <span>Carlos</span>
+        <span class="text-brand-primary">Román</span>
+      </h1>
+
+      <!-- Rotating Role -->
+      <div class="lowercase font-light flex items-center leading-tight text-xs min-h-4 justify-start" style="font-family: 'Open Sans', sans-serif;">
+        <p id="role-text" class="text-white" style="opacity: 0.8;">Full Stack Developer</p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Roles array
+    const roles = ['Full Stack Developer', 'Software Engineer', 'Solutions Developer']
+    let currentRoleIndex = 0
+    let roleInterval = null
+
+    // Config default
+    const DEFAULT_CONFIG = {
+      showText: false,
+      isPreview: false,
+      isVisible: false
+    }
+
+    // Load config from localStorage
+    function loadConfig() {
+      const saved = localStorage.getItem('obs-logo-config')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+      return DEFAULT_CONFIG
+    }
+
+    // Apply config to overlay
+    function applyConfig(config) {
+      const shouldShow = config.isPreview || config.isVisible
+
+      if (!shouldShow) {
+        // Hide everything
+        hideOverlay()
+        return
+      }
+
+      // Show overlay with appropriate mode
+      if (config.showText) {
+        showLogoWithText()
+      } else {
+        showLogoOnly()
+      }
+
+      console.log('📺 Logo overlay updated:', config)
+    }
+
+    // Hide overlay completely
+    function hideOverlay() {
+      const container = document.getElementById('logo-container')
+      container.style.opacity = '0'
+      stopRoleRotation()
+    }
+
+    // Show logo only (no text)
+    function showLogoOnly() {
+      const container = document.getElementById('logo-container')
+      const logoCircle = document.getElementById('logo-circle')
+      const logoText = document.getElementById('logo-text')
+
+      container.style.opacity = '1'
+      logoCircle.style.transform = 'translateX(0)'
+      logoText.style.opacity = '0'
+
+      stopRoleRotation()
+    }
+
+    // Show logo with text
+    function showLogoWithText() {
+      const container = document.getElementById('logo-container')
+      const logoCircle = document.getElementById('logo-circle')
+      const logoText = document.getElementById('logo-text')
+
+      container.style.opacity = '1'
+
+      // Move logo left to make space for text
+      setTimeout(() => {
+        logoCircle.style.transform = 'translateX(-115px)'
+      }, 50)
+
+      // Show text after logo moves
+      setTimeout(() => {
+        logoText.style.opacity = '1'
+      }, 650)
+
+      startRoleRotation()
+    }
+
+    // Start rotating roles
+    function startRoleRotation() {
+      stopRoleRotation() // Clear any existing interval
+
+      roleInterval = setInterval(() => {
+        currentRoleIndex = (currentRoleIndex + 1) % roles.length
+        updateRoleText()
+      }, 4000)
+    }
+
+    // Stop rotating roles
+    function stopRoleRotation() {
+      if (roleInterval) {
+        clearInterval(roleInterval)
+        roleInterval = null
+      }
+    }
+
+    // Update role text with fade effect
+    function updateRoleText() {
+      const roleElement = document.getElementById('role-text')
+
+      // Fade out
+      roleElement.style.opacity = '0'
+
+      // Change text
+      setTimeout(() => {
+        roleElement.textContent = roles[currentRoleIndex]
+
+        // Fade in
+        setTimeout(() => {
+          roleElement.style.opacity = '0.8'
+        }, 50)
+      }, 400)
+    }
+
+    // Listen for storage changes (when controller updates config)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'obs-logo-config') {
+        const config = loadConfig()
+        applyConfig(config)
+      }
+    })
+
+    // Polling fallback (in case storage event doesn't fire)
+    setInterval(() => {
+      const config = loadConfig()
+      applyConfig(config)
+    }, 1000)
+
+    // Apply initial config
+    window.addEventListener('DOMContentLoaded', () => {
+      const config = loadConfig()
+      applyConfig(config)
+    })
+  </script>
+</body>
+</html>

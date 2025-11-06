@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logo Controller</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- OBS WebSocket Library -->
+  <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.3/dist/obs-ws.min.js"></script>
+
+  <!-- Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#b1d900',
+            'brand-accent': '#82a000',
+            'brand-dark': '#5c7000',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-zinc-900 text-white p-4 min-h-screen">
+
+  <!-- Header -->
+  <div class="mb-6">
+    <h2 class="text-xl font-bold text-brand-primary flex items-center gap-2">
+      🎨 Logo Controller
+    </h2>
+    <p class="text-xs text-zinc-400 mt-1">Control logo visibility and text</p>
+  </div>
+
+  <!-- Connection Status -->
+  <div class="mb-4 p-3 rounded-lg bg-zinc-800 border border-zinc-700">
+    <div class="flex items-center justify-between">
+      <span class="text-sm">OBS Status:</span>
+      <span id="status" class="text-sm">
+        <span class="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-2"></span>
+        Not connected
+      </span>
+    </div>
+    <p class="text-xs text-zinc-500 mt-2">
+      OBS WebSocket is optional. Changes are saved to localStorage.
+    </p>
+  </div>
+
+  <!-- Logo Options Card -->
+  <div class="bg-zinc-800 rounded-lg p-4 border border-zinc-700 mb-4">
+    <h3 class="text-sm font-semibold mb-4 text-zinc-300">Display Options</h3>
+
+    <!-- Show Text Toggle -->
+    <label class="flex items-center justify-between p-3 bg-zinc-700/50 rounded-md mb-3 cursor-pointer hover:bg-zinc-700 transition-colors">
+      <span class="text-sm font-medium">Show Text</span>
+      <div class="relative">
+        <input
+          type="checkbox"
+          id="show-text-toggle"
+          checked
+          class="sr-only peer"
+          onchange="handleShowTextToggle(this.checked)"
+        >
+        <div class="w-11 h-6 bg-zinc-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary"></div>
+      </div>
+    </label>
+
+    <!-- Preview Toggle -->
+    <label class="flex items-center justify-between p-3 bg-zinc-700/50 rounded-md mb-3 cursor-pointer hover:bg-zinc-700 transition-colors">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-medium">Preview</span>
+        <span class="text-xs text-yellow-500">●</span>
+      </div>
+      <div class="relative">
+        <input
+          type="checkbox"
+          id="preview-toggle"
+          class="sr-only peer"
+          onchange="handlePreviewToggle(this.checked)"
+        >
+        <div class="w-11 h-6 bg-zinc-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-yellow-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+      </div>
+    </label>
+
+    <!-- On Air Toggle -->
+    <label class="flex items-center justify-between p-3 bg-zinc-700/50 rounded-md cursor-pointer hover:bg-zinc-700 transition-colors">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-medium">On Air</span>
+        <span class="text-xs text-red-500">●</span>
+      </div>
+      <div class="relative">
+        <input
+          type="checkbox"
+          id="onair-toggle"
+          class="sr-only peer"
+          onchange="handleOnAirToggle(this.checked)"
+        >
+        <div class="w-11 h-6 bg-zinc-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+      </div>
+    </label>
+  </div>
+
+  <!-- Actions -->
+  <div class="bg-zinc-800 rounded-lg p-4 border border-zinc-700 mb-4">
+    <button
+      onclick="refreshOverlay()"
+      class="w-full px-4 py-2 bg-brand-primary text-black rounded-md hover:bg-brand-accent transition-colors font-medium text-sm mb-2"
+    >
+      🔄 Refresh Overlay
+    </button>
+    <button
+      onclick="resetConfig()"
+      class="w-full px-4 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-600 transition-colors font-medium text-sm"
+    >
+      ↺ Reset to Defaults
+    </button>
+  </div>
+
+  <!-- Current Config Display -->
+  <div class="bg-zinc-800 rounded-lg p-4 border border-zinc-700">
+    <h3 class="text-sm font-semibold mb-2 text-zinc-300">Current Configuration</h3>
+    <pre id="config-display" class="text-xs bg-zinc-900 p-3 rounded overflow-x-auto text-brand-primary font-mono"></pre>
+  </div>
+
+  <!-- Footer -->
+  <div class="mt-6 pt-4 border-t border-zinc-700">
+    <p class="text-xs text-zinc-500 text-center">
+      Last sync: <span id="last-sync">--:--</span>
+    </p>
+  </div>
+
+  <script>
+    const obs = new OBSWebSocket.OBSWebSocket()
+    let isOBSConnected = false
+
+    // Config por defecto
+    const DEFAULT_CONFIG = {
+      showText: true,
+      isPreview: false,
+      isVisible: false
+    }
+
+    // Cargar config desde localStorage
+    function loadConfig() {
+      const saved = localStorage.getItem('obs-logo-config')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+      return DEFAULT_CONFIG
+    }
+
+    // Guardar config en localStorage
+    function saveConfig(config) {
+      localStorage.setItem('obs-logo-config', JSON.stringify(config))
+
+      // Disparar evento para que el overlay se entere
+      window.dispatchEvent(new CustomEvent('logo-config-updated', {
+        detail: config
+      }))
+
+      updateLastSync()
+      updateConfigDisplay()
+    }
+
+    // Conectar a OBS (opcional)
+    async function connectOBS() {
+      try {
+        // Intentar conexión - AJUSTAR PASSWORD AQUÍ
+        await obs.connect('ws://localhost:4455', 'your-password')
+
+        isOBSConnected = true
+        document.getElementById('status').innerHTML =
+          '<span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>Connected'
+
+        console.log('✅ Connected to OBS WebSocket')
+      } catch (error) {
+        isOBSConnected = false
+        document.getElementById('status').innerHTML =
+          '<span class="inline-block w-2 h-2 rounded-full bg-gray-500 mr-2"></span>Not connected'
+
+        console.log('ℹ️ OBS WebSocket not available (optional)')
+      }
+    }
+
+    // Handlers
+    function handleShowTextToggle(checked) {
+      const config = loadConfig()
+      config.showText = checked
+      saveConfig(config)
+
+      console.log('Show text:', checked)
+    }
+
+    function handlePreviewToggle(checked) {
+      const config = loadConfig()
+      config.isPreview = checked
+      saveConfig(config)
+
+      console.log('Preview:', checked)
+    }
+
+    function handleOnAirToggle(checked) {
+      const config = loadConfig()
+      config.isVisible = checked
+      saveConfig(config)
+
+      console.log('On Air:', checked)
+    }
+
+    function refreshOverlay() {
+      // Forzar actualización del overlay
+      const config = loadConfig()
+      window.dispatchEvent(new CustomEvent('logo-config-updated', {
+        detail: config
+      }))
+
+      // Feedback visual
+      const btn = event.target
+      const originalText = btn.textContent
+      btn.textContent = '✅ Refreshed!'
+      setTimeout(() => {
+        btn.textContent = originalText
+      }, 1500)
+    }
+
+    function resetConfig() {
+      if (confirm('¿Reset configuration to defaults?')) {
+        saveConfig(DEFAULT_CONFIG)
+
+        // Restaurar UI
+        document.getElementById('show-text-toggle').checked = DEFAULT_CONFIG.showText
+        document.getElementById('preview-toggle').checked = DEFAULT_CONFIG.isPreview
+        document.getElementById('onair-toggle').checked = DEFAULT_CONFIG.isVisible
+
+        console.log('✅ Configuration reset to defaults')
+      }
+    }
+
+    function updateLastSync() {
+      const now = new Date()
+      document.getElementById('last-sync').textContent =
+        now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    }
+
+    function updateConfigDisplay() {
+      const config = loadConfig()
+      document.getElementById('config-display').textContent =
+        JSON.stringify(config, null, 2)
+    }
+
+    // Restaurar estado al cargar
+    window.addEventListener('DOMContentLoaded', () => {
+      const config = loadConfig()
+
+      document.getElementById('show-text-toggle').checked = config.showText
+      document.getElementById('preview-toggle').checked = config.isPreview
+      document.getElementById('onair-toggle').checked = config.isVisible
+
+      updateConfigDisplay()
+      connectOBS()
+    })
+  </script>
+</body>
+</html>
