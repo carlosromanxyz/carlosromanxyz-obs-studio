@@ -116,9 +116,8 @@
 
     // Config default
     const DEFAULT_CONFIG = {
-      showText: false,
-      isPreview: false,
-      isVisible: false
+      isVisible: true,
+      showText: false
     }
 
     // Load config from localStorage
@@ -132,15 +131,16 @@
 
     // Apply config to overlay
     function applyConfig(config) {
-      const shouldShow = config.isPreview || config.isVisible
+      const container = document.getElementById('logo-container')
 
-      if (!shouldShow) {
-        // Hide everything
-        hideOverlay()
+      // Check visibility first
+      if (!config.isVisible) {
+        container.style.opacity = '0'
+        stopRoleRotation()
         return
       }
 
-      // Show overlay with appropriate mode
+      // Show logo with or without text
       if (config.showText) {
         showLogoWithText()
       } else {
@@ -148,13 +148,6 @@
       }
 
       console.log('📺 Logo overlay updated:', config)
-    }
-
-    // Hide overlay completely
-    function hideOverlay() {
-      const container = document.getElementById('logo-container')
-      container.style.opacity = '0'
-      stopRoleRotation()
     }
 
     // Show logo only (no text)

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Overlay</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#b1d900',
+            'brand-accent': '#82a000',
+            'brand-dark': '#5c7000',
+            'brand-darker': '#525252',
+            'brand-black': '#000000',
+            'citron-800': '#84cc16',     // lime green (darker)
+            'citron-950': '#1a2e05',     // lime green (darkest)
+            'black-800': '#1f2937',      // near black
+            'black-900': '#111827',      // darker black
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* Width expansion animation */
+    @keyframes expand-width {
+      from {
+        width: 0;
+        opacity: 0;
+      }
+      to {
+        width: auto;
+        opacity: 1;
+      }
+    }
+
+    /* Slide from left animations */
+    @keyframes slide-in-label {
+      from {
+        transform: translateX(-100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slide-in-text {
+      from {
+        transform: translateX(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Apply animations */
+    .live-container {
+      animation: expand-width 0.6s ease-in-out forwards;
+    }
+
+    .live-label {
+      animation: slide-in-label 0.4s ease-in-out forwards;
+    }
+
+    .live-text {
+      animation: slide-in-text 0.4s ease-in-out 0.4s forwards;
+      opacity: 0; /* Start hidden, animation will show it */
+    }
+
+    /* Smooth transitions */
+    .live-transition {
+      transition: all 0.7s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Live Indicator Container -->
+  <div id="live-indicator" class="fixed top-32 left-40 hidden">
+    <!-- Badge Container -->
+    <div class="live-container flex rounded-lg border-2 border-brand-primary overflow-hidden bg-gradient-to-t from-black-800 to-black-900 live-transition">
+
+      <!-- "EN VIVO" Label - Citron gradient -->
+      <span class="live-label bg-gradient-to-t from-citron-800 to-citron-950 uppercase text-white px-8 py-2 text-2xl font-semibold whitespace-nowrap">
+        EN VIVO
+      </span>
+
+      <!-- Location Text - Black gradient -->
+      <span id="live-location" class="live-text bg-gradient-to-t from-black-900 to-black-800 text-white px-8 py-2 text-2xl whitespace-nowrap" style="font-family: Raleway, sans-serif;">
+        SANTIAGO
+      </span>
+
+    </div>
+  </div>
+
+  <script>
+    // Config default
+    const DEFAULT_CONFIG = {
+      text: 'SANTIAGO',
+      isVisible: false,
+      aspectRatio: '16:9'
+    }
+
+    // Load config from localStorage
+    function loadConfig() {
+      const saved = localStorage.getItem('obs-live-config')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+      return DEFAULT_CONFIG
+    }
+
+    // Apply config to overlay
+    function applyConfig(config) {
+      const container = document.getElementById('live-indicator')
+      const locationText = document.getElementById('live-location')
+
+      // Update position based on aspect ratio
+      // 16:9 → left-40 (160px), 4:3 → left-80 (320px)
+      if (config.aspectRatio === '4:3') {
+        container.className = 'fixed top-32 left-80'
+      } else {
+        container.className = 'fixed top-32 left-40'
+      }
+
+      // Update location text
+      locationText.textContent = config.text || 'SANTIAGO'
+
+      // Show/hide based on visibility
+      if (config.isVisible) {
+        container.classList.remove('hidden')
+      } else {
+        container.classList.add('hidden')
+      }
+
+      console.log('📺 Live overlay updated:', config)
+    }
+
+    // Listen for storage changes (when controller updates config)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'obs-live-config') {
+        const config = loadConfig()
+        applyConfig(config)
+      }
+    })
+
+    // Polling fallback (in case storage event doesn't fire)
+    setInterval(() => {
+      const config = loadConfig()
+      applyConfig(config)
+    }, 1000)
+
+    // Apply initial config
+    window.addEventListener('DOMContentLoaded', () => {
+      const config = loadConfig()
+      applyConfig(config)
+    })
+  </script>
+</body>
+</html>

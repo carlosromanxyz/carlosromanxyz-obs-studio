@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlays</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- OBS WebSocket Library -->
+  <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.3/dist/obs-ws.min.js"></script>
+
+  <!-- Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#b1d900',
+            'brand-accent': '#82a000',
+            'brand-dark': '#5c7000',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-zinc-900 text-white p-4 min-h-screen space-y-2">
+
+  <!-- OBS Status Badge -->
+  <div class="flex justify-end mb-2">
+    <span id="status" class="px-2 py-0.5 text-[10px] font-medium rounded bg-yellow-900/50 text-yellow-400 border border-yellow-700/50">
+      Disconnected
+    </span>
+  </div>
+
+  <!-- Logo Accordion -->
+  <div class="border border-zinc-700 rounded-lg overflow-hidden">
+    <!-- Header with Toggle -->
+    <div class="flex items-center gap-3 p-3 bg-zinc-800 hover:bg-zinc-700 transition-colors">
+      <span class="text-sm font-medium flex-1 cursor-pointer" onclick="toggleAccordion('logo')">Logo</span>
+      <!-- Toggle Switch -->
+      <label class="relative cursor-pointer">
+        <input
+          type="checkbox"
+          id="logo-visible-toggle"
+          checked
+          class="sr-only peer"
+          onchange="handleLogoVisibleToggle(this.checked)"
+        >
+        <div class="w-11 h-6 bg-zinc-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary"></div>
+      </label>
+      <!-- Chevron -->
+      <svg id="logo-chevron" class="w-4 h-4 text-zinc-400 transition-transform duration-200 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="toggleAccordion('logo')">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </div>
+    <!-- Content -->
+    <div id="logo-content" class="bg-zinc-800/50 border-t border-zinc-700 hidden">
+      <div class="p-3 space-y-2">
+        <label class="flex items-center justify-between p-2 hover:bg-zinc-700/50 rounded cursor-pointer">
+          <span class="text-sm text-zinc-300">Mostrar texto</span>
+          <div class="relative">
+            <input
+              type="checkbox"
+              id="show-text-toggle"
+              checked
+              class="sr-only peer"
+              onchange="handleShowTextToggle(this.checked)"
+            >
+            <div class="w-11 h-6 bg-zinc-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary"></div>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Accordion -->
+  <div class="border border-zinc-700 rounded-lg overflow-hidden">
+    <!-- Header with Toggle -->
+    <div class="flex items-center gap-3 p-3 bg-zinc-800 hover:bg-zinc-700 transition-colors">
+      <span class="text-sm font-medium flex-1 cursor-pointer" onclick="toggleAccordion('live')">En Vivo</span>
+      <!-- Toggle Switch -->
+      <label class="relative cursor-pointer">
+        <input
+          type="checkbox"
+          id="live-toggle"
+          class="sr-only peer"
+          onchange="handleLiveToggle(this.checked)"
+        >
+        <div class="w-11 h-6 bg-zinc-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary"></div>
+      </label>
+      <!-- Chevron -->
+      <svg id="live-chevron" class="w-4 h-4 text-zinc-400 transition-transform duration-200 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="toggleAccordion('live')">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </div>
+    <!-- Content -->
+    <div id="live-content" class="bg-zinc-800/50 border-t border-zinc-700 hidden">
+      <div class="p-3">
+        <label class="block">
+          <span class="text-xs text-zinc-400 mb-1.5 block">Ubicación</span>
+          <input
+            type="text"
+            id="live-location-input"
+            placeholder="SANTIAGO"
+            maxlength="20"
+            class="w-full px-3 py-2 bg-zinc-700 text-white rounded border border-zinc-600 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary text-sm uppercase"
+            oninput="handleLiveLocationInput(this.value)"
+          >
+        </label>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Widget Scripts -->
+  <script src="../js/obs-connection.js"></script>
+  <script src="../js/accordion.js"></script>
+  <script src="../js/logo-widget.js"></script>
+  <script src="../js/live-widget.js"></script>
+
+  <!-- Initialize -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      initLogoWidget()
+      initLiveWidget()
+      connectOBS()
+    })
+  </script>
+</body>
+</html>
