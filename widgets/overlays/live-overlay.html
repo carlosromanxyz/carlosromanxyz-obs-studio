@@ -13,15 +13,11 @@
       theme: {
         extend: {
           colors: {
-            'brand-primary': '#b1d900',
-            'brand-accent': '#82a000',
-            'brand-dark': '#5c7000',
-            'brand-darker': '#525252',
-            'brand-black': '#000000',
-            'citron-800': '#84cc16',     // lime green (darker)
-            'citron-950': '#1a2e05',     // lime green (darkest)
-            'black-800': '#1f2937',      // near black
-            'black-900': '#111827',      // darker black
+            'brand-primary': '#b1d900',   // Pear - Primary accent
+            'brand-accent': '#82a000',    // Apple Green - Secondary accent
+            'brand-dark': '#5c7000',      // Avocado - Dark variant
+            'brand-darker': '#525252',    // Davys Gray - Neutral gray
+            'brand-black': '#000000',     // Black - Maximum contrast
           }
         }
       }
@@ -95,15 +91,15 @@
   <!-- Live Indicator Container -->
   <div id="live-indicator" class="fixed top-32 left-40 hidden">
     <!-- Badge Container -->
-    <div class="live-container flex rounded-lg border-2 border-brand-primary overflow-hidden bg-gradient-to-t from-black-800 to-black-900 live-transition">
+    <div class="live-container flex rounded-lg border-2 border-brand-primary overflow-hidden bg-gradient-to-t from-brand-darker to-brand-black live-transition">
 
-      <!-- "EN VIVO" Label - Citron gradient -->
-      <span class="live-label bg-gradient-to-t from-citron-800 to-citron-950 uppercase text-white px-8 py-2 text-2xl font-semibold whitespace-nowrap">
+      <!-- "EN VIVO" Label - Brand gradient (matches border) -->
+      <span class="live-label bg-gradient-to-t from-brand-accent to-brand-primary uppercase text-white px-8 py-2 text-2xl font-semibold whitespace-nowrap">
         EN VIVO
       </span>
 
       <!-- Location Text - Black gradient -->
-      <span id="live-location" class="live-text bg-gradient-to-t from-black-900 to-black-800 text-white px-8 py-2 text-2xl whitespace-nowrap" style="font-family: Raleway, sans-serif;">
+      <span id="live-location" class="live-text bg-gradient-to-t from-brand-black to-brand-darker text-white px-8 py-2 text-2xl whitespace-nowrap" style="font-family: Raleway, sans-serif;">
         SANTIAGO
       </span>
 
