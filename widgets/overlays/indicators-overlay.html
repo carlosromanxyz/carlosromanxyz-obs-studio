@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indicators Overlay</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#b1d900',   // Pear - Primary accent
+            'brand-accent': '#82a000',    // Apple Green - Secondary accent
+            'brand-dark': '#5c7000',      // Avocado - Dark variant
+            'brand-darker': '#525252',    // Davys Gray - Neutral gray
+            'brand-black': '#000000',     // Black - Maximum contrast
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* Entrance animations - GPU accelerated (transform, opacity only) */
+    @keyframes fadeInScaleY {
+      from {
+        opacity: 0;
+        transform: scaleY(0);
+      }
+      to {
+        opacity: 1;
+        transform: scaleY(1);
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInRight {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes pulseScale {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+    }
+
+    /* Staggered entrance sequence (1.2s total) */
+    .animate-entrance-container {
+      animation: fadeInScaleY 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+      transform-origin: top;
+    }
+
+    .animate-entrance-header {
+      animation: fadeInDown 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.2s both;
+    }
+
+    .animate-entrance-row-1 {
+      animation: fadeInRight 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.4s both;
+    }
+
+    .animate-entrance-row-2 {
+      animation: fadeInRight 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.5s both;
+    }
+
+    .animate-entrance-row-3 {
+      animation: fadeInRight 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.6s both;
+    }
+
+    .animate-entrance-row-4 {
+      animation: fadeInRight 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.7s both;
+    }
+
+    .animate-entrance-dot-1 {
+      animation: fadeInRight 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.4s both;
+    }
+
+    .animate-entrance-dot-2 {
+      animation: fadeInRight 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.5s both;
+    }
+
+    .animate-entrance-dot-3 {
+      animation: fadeInRight 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.6s both;
+    }
+
+    .animate-entrance-dot-4 {
+      animation: fadeInRight 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.7s both;
+    }
+
+    /* Exit animation */
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    .animate-exit {
+      animation: fadeOut 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+    }
+
+    /* Value change pulse */
+    .value-changed {
+      animation: pulseScale 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+    }
+
+    /* Loading shimmer effect */
+    @keyframes shimmer {
+      0% { background-position: -200px 0; }
+      100% { background-position: 200px 0; }
+    }
+
+    .loading-shimmer {
+      background: linear-gradient(
+        90deg,
+        rgba(82, 82, 82, 0.3) 0%,
+        rgba(177, 217, 0, 0.2) 50%,
+        rgba(82, 82, 82, 0.3) 100%
+      );
+      background-size: 200px 100%;
+      animation: shimmer 1.5s infinite linear;
+    }
+
+    /* Initial state - hidden */
+    .indicators-container,
+    .indicators-header,
+    .indicator-row,
+    .indicator-dot {
+      opacity: 0;
+    }
+
+    /* Smooth transitions */
+    .indicator-transition {
+      transition: all 0.3s ease-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Indicators Container -->
+  <div id="indicators-widget" class="fixed top-32 right-28 hidden">
+    <!-- Card Container -->
+    <div class="indicators-container bg-gradient-to-b from-zinc-900 to-black border-2 border-brand-primary rounded-lg overflow-hidden" style="width: 280px; transform: scaleY(1); transform-origin: top;">
+
+      <!-- Header -->
+      <div class="indicators-header bg-gradient-to-r from-brand-dark to-brand-accent px-4 py-2">
+        <h2 class="text-white text-sm font-semibold uppercase tracking-wide" style="font-family: Raleway, sans-serif;">
+          Indicadores Económicos
+        </h2>
+      </div>
+
+      <!-- Indicators List (Semantic: Description List) -->
+      <dl class="indicators-list p-4 space-y-3" role="list" aria-label="Chilean Economic Indicators">
+
+        <!-- UF -->
+        <div class="indicator-row indicator-item flex items-center justify-between" data-indicator="uf">
+          <dt class="indicator-label flex items-center gap-2 text-zinc-300 text-sm">
+            <span class="indicator-dot w-2 h-2 rounded-full bg-brand-primary" aria-hidden="true"></span>
+            <span>UF</span>
+          </dt>
+          <dd class="indicator-value text-white text-sm font-medium" style="font-family: 'Open Sans', sans-serif;">
+            <data id="indicator-value-uf" value="">--</data>
+          </dd>
+        </div>
+
+        <!-- UTM -->
+        <div class="indicator-row indicator-item flex items-center justify-between" data-indicator="utm">
+          <dt class="indicator-label flex items-center gap-2 text-zinc-300 text-sm">
+            <span class="indicator-dot w-2 h-2 rounded-full bg-brand-primary" aria-hidden="true"></span>
+            <span>UTM</span>
+          </dt>
+          <dd class="indicator-value text-white text-sm font-medium" style="font-family: 'Open Sans', sans-serif;">
+            <data id="indicator-value-utm" value="">--</data>
+          </dd>
+        </div>
+
+        <!-- IPC -->
+        <div class="indicator-row indicator-item flex items-center justify-between" data-indicator="ipc">
+          <dt class="indicator-label flex items-center gap-2 text-zinc-300 text-sm">
+            <span class="indicator-dot w-2 h-2 rounded-full bg-brand-primary" aria-hidden="true"></span>
+            <span>IPC</span>
+          </dt>
+          <dd class="indicator-value text-white text-sm font-medium" style="font-family: 'Open Sans', sans-serif;">
+            <data id="indicator-value-ipc" value="">--</data>
+          </dd>
+        </div>
+
+        <!-- Dólar -->
+        <div class="indicator-row indicator-item flex items-center justify-between" data-indicator="dolar">
+          <dt class="indicator-label flex items-center gap-2 text-zinc-300 text-sm">
+            <span class="indicator-dot w-2 h-2 rounded-full bg-brand-primary" aria-hidden="true"></span>
+            <span>Dólar</span>
+          </dt>
+          <dd class="indicator-value text-white text-sm font-medium" style="font-family: 'Open Sans', sans-serif;">
+            <data id="indicator-value-dolar" value="">--</data>
+          </dd>
+        </div>
+
+      </dl>
+
+    </div>
+  </div>
+
+  <script src="../js/indicators-data.js"></script>
+  <script>
+    // State Transition Manager - tracks previous config to detect state changes
+    let previousConfig = null
+    let previousValues = {}
+
+    // Config default
+    const DEFAULT_CONFIG = {
+      isVisible: false,
+      indicators: {},
+      lastUpdated: null,
+      isLoading: false,
+      errors: {}
+    }
+
+    // Load config from localStorage
+    function loadConfig() {
+      const saved = localStorage.getItem('obs-indicators-config')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+      return DEFAULT_CONFIG
+    }
+
+    // Detect if state actually changed (prevents redundant processing during polling)
+    function detectStateChange(prev, curr) {
+      if (prev === null) return true // First load
+      return prev.isVisible !== curr.isVisible ||
+             JSON.stringify(prev.indicators) !== JSON.stringify(curr.indicators) ||
+             prev.isLoading !== curr.isLoading
+    }
+
+    // Play entrance animation
+    function playEntranceAnimation() {
+      const container = document.querySelector('.indicators-container')
+      const header = document.querySelector('.indicators-header')
+      const rows = document.querySelectorAll('.indicator-row')
+      const dots = document.querySelectorAll('.indicator-dot')
+
+      // Remove any exit animations
+      container.classList.remove('animate-exit')
+      header.classList.remove('animate-exit')
+      rows.forEach(row => row.classList.remove('animate-exit'))
+      dots.forEach(dot => dot.classList.remove('animate-exit'))
+
+      // Force reflow
+      void container.offsetWidth
+
+      // Apply staggered entrance animations
+      container.classList.add('animate-entrance-container')
+      header.classList.add('animate-entrance-header')
+
+      rows.forEach((row, index) => {
+        row.classList.add(`animate-entrance-row-${index + 1}`)
+      })
+
+      dots.forEach((dot, index) => {
+        dot.classList.add(`animate-entrance-dot-${index + 1}`)
+      })
+    }
+
+    // Play exit animation
+    function playExitAnimation() {
+      const widget = document.getElementById('indicators-widget')
+      const container = document.querySelector('.indicators-container')
+
+      // Remove entrance animations
+      container.classList.remove('animate-entrance-container')
+
+      // Force reflow
+      void container.offsetWidth
+
+      // Apply exit animation
+      container.classList.add('animate-exit')
+
+      // Hide widget after animation completes
+      setTimeout(() => {
+        widget.classList.add('hidden')
+      }, 400)
+    }
+
+    // Update indicator value with optional pulse animation
+    function updateIndicatorValue(indicator, data) {
+      const valueEl = document.getElementById(`indicator-value-${indicator}`)
+      if (!valueEl) return
+
+      const formatted = formatValue(data.value, indicator)
+      const oldValue = previousValues[indicator]
+
+      // Set machine-readable value
+      valueEl.setAttribute('value', data.value)
+
+      // Check if value changed
+      const hasChanged = oldValue !== undefined && oldValue !== data.value
+
+      if (hasChanged) {
+        // Pulse animation on value change
+        valueEl.parentElement.classList.add('value-changed')
+        setTimeout(() => {
+          valueEl.parentElement.classList.remove('value-changed')
+        }, 600)
+      }
+
+      // Update displayed value
+      valueEl.textContent = formatted
+
+      // Store current value
+      previousValues[indicator] = data.value
+    }
+
+    // Show loading state
+    function showLoadingState() {
+      const valueElements = document.querySelectorAll('.indicator-value data')
+      valueElements.forEach(el => {
+        el.textContent = '...'
+        el.parentElement.classList.add('loading-shimmer')
+      })
+    }
+
+    // Hide loading state
+    function hideLoadingState() {
+      const valueElements = document.querySelectorAll('.indicator-value data')
+      valueElements.forEach(el => {
+        el.parentElement.classList.remove('loading-shimmer')
+      })
+    }
+
+    // Show error state
+    function showErrorState(indicator) {
+      const valueEl = document.getElementById(`indicator-value-${indicator}`)
+      if (!valueEl) return
+
+      valueEl.textContent = 'Error'
+      valueEl.parentElement.classList.add('text-red-400')
+    }
+
+    // Apply config to overlay with state transition detection
+    function applyConfig(config) {
+      const widget = document.getElementById('indicators-widget')
+
+      // Detect if this is an actual state change
+      const isStateChange = detectStateChange(previousConfig, config)
+
+      if (!isStateChange && previousConfig !== null) {
+        return // Skip if polling with no change
+      }
+
+      // Detect entrance transition (false → true or initial load)
+      const wasHidden = !previousConfig || !previousConfig.isVisible
+      const isNowVisible = config.isVisible
+
+      // Handle visibility changes
+      if (isNowVisible) {
+        widget.classList.remove('hidden')
+
+        // Play entrance animation on first show
+        if (wasHidden) {
+          playEntranceAnimation()
+        }
+
+        // Handle loading state
+        if (config.isLoading) {
+          showLoadingState()
+        } else {
+          hideLoadingState()
+
+          // Update indicator values
+          Object.keys(config.indicators).forEach(indicator => {
+            const data = config.indicators[indicator]
+            if (data && data.value !== undefined) {
+              updateIndicatorValue(indicator, data)
+            }
+          })
+
+          // Show errors
+          Object.keys(config.errors).forEach(indicator => {
+            showErrorState(indicator)
+          })
+        }
+
+      } else {
+        if (previousConfig && previousConfig.isVisible) {
+          // Was visible, now hiding - play exit animation
+          playExitAnimation()
+        } else {
+          // Already hidden
+          widget.classList.add('hidden')
+        }
+      }
+
+      // Store current config as previous for next comparison
+      previousConfig = { ...config }
+
+      console.log('📺 Indicators overlay updated:', config, 'wasHidden:', wasHidden)
+    }
+
+    // Listen for storage changes (when controller updates config)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'obs-indicators-config') {
+        const config = loadConfig()
+        applyConfig(config)
+      }
+    })
+
+    // Polling fallback (in case storage event doesn't fire)
+    setInterval(() => {
+      const config = loadConfig()
+      applyConfig(config)
+    }, 1000)
+
+    // Apply initial config
+    window.addEventListener('DOMContentLoaded', () => {
+      const config = loadConfig()
+      applyConfig(config)
+    })
+  </script>
+</body>
+</html>

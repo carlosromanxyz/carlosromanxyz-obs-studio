@@ -114,18 +114,67 @@
     </div>
   </div>
 
+  <!-- Indicators Accordion -->
+  <div class="border border-zinc-700 rounded-lg overflow-hidden">
+    <!-- Header with Toggle -->
+    <div class="flex items-center gap-3 p-3 bg-zinc-800 hover:bg-zinc-700 transition-colors">
+      <span class="text-sm font-medium flex-1 cursor-pointer" onclick="toggleAccordion('indicators')">Indicadores Económicos</span>
+      <!-- Toggle Switch -->
+      <label class="relative cursor-pointer">
+        <input
+          type="checkbox"
+          id="indicators-toggle"
+          class="sr-only peer"
+          onchange="handleIndicatorsToggle(this.checked)"
+        >
+        <div class="w-11 h-6 bg-zinc-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary"></div>
+      </label>
+      <!-- Chevron -->
+      <svg id="indicators-chevron" class="w-4 h-4 text-zinc-400 transition-transform duration-200 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="toggleAccordion('indicators')">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </div>
+    <!-- Content -->
+    <div id="indicators-content" class="bg-zinc-800/50 border-t border-zinc-700 hidden">
+      <div class="p-3 space-y-3">
+        <!-- Refresh Button -->
+        <button
+          id="indicators-refresh-btn"
+          onclick="handleIndicatorsRefresh()"
+          class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-brand-primary hover:bg-brand-accent text-black font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <span class="text-sm">Actualizar</span>
+        </button>
+
+        <!-- Last Updated Timestamp -->
+        <p id="indicators-timestamp" class="text-xs text-zinc-400 text-center">
+          Sin datos
+        </p>
+
+        <!-- Feedback Message -->
+        <p id="indicators-feedback" class="text-xs text-center opacity-0 transition-opacity duration-300"></p>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Widget Scripts -->
   <script src="../js/obs-connection.js"></script>
   <script src="../js/accordion.js"></script>
   <script src="../js/logo-widget.js"></script>
   <script src="../js/live-widget.js"></script>
+  <script src="../js/indicators-data.js"></script>
+  <script src="../js/indicators-widget.js"></script>
 
   <!-- Initialize -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       initLogoWidget()
       initLiveWidget()
+      initIndicatorsWidget()
       connectOBS()
     })
   </script>

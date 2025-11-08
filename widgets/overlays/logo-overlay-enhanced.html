@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logo Overlay (Enhanced with Entrance Animations)</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#b1d900',
+            'brand-accent': '#82a000',
+            'brand-dark': '#5c7000',
+            'brand-darker': '#525252',
+            'brand-black': '#000000',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* ============================================ */
+    /* ENTRANCE ANIMATIONS */
+    /* ============================================ */
+
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes fadeInScaleBounce {
+      from {
+        opacity: 0;
+        transform: scale(0);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Animation classes with staggered delays */
+    .animate-entrance-circle-outer {
+      animation: fadeInScale 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+      animation-delay: 0.2s;
+      opacity: 0;
+    }
+
+    .animate-entrance-circle-inner {
+      animation: fadeInScaleBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      animation-delay: 0.2s;
+      opacity: 0;
+      transform: scale(0);
+    }
+
+    .animate-entrance-braces {
+      animation: fadeIn 0.5s ease-out forwards;
+      animation-delay: 0.8s;
+      opacity: 0;
+    }
+
+    .animate-entrance-dots {
+      animation: fadeIn 0.5s ease-out forwards;
+      animation-delay: 1s;
+      opacity: 0;
+    }
+
+    /* Reset class - removes animations and sets final state */
+    .reset-entrance {
+      animation: none !important;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* ============================================ */
+    /* PULSE ANIMATION (for dots) */
+    /* ============================================ */
+
+    @keyframes pulse-scale {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    .pulse-dot {
+      animation: pulse-scale 2s ease-in-out infinite;
+    }
+
+    .pulse-dot:nth-child(2) {
+      animation-delay: 0.5s;
+    }
+
+    /* Override pulse during entrance animation */
+    .animate-entrance-dots.pulse-dot {
+      animation: fadeIn 0.5s ease-out forwards;
+      animation-delay: 1s;
+    }
+
+    /* ============================================ */
+    /* SMOOTH TRANSITIONS */
+    /* ============================================ */
+
+    .logo-transition {
+      transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+    }
+
+    .text-transition {
+      transition: opacity 0.4s ease-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Logo Container -->
+  <div id="logo-container" class="fixed top-32 right-28" style="width: 200px; height: 48px; transform: scale(2); transform-origin: right top;">
+
+    <!-- Logo Circle (moves left when text appears) -->
+    <div id="logo-circle" class="absolute top-0 right-0 logo-transition" style="transform: translateX(0);">
+      <div class="relative h-12 w-12">
+
+        <!-- LAYER 1: Green border circle -->
+        <div id="circle-outer" class="absolute inset-0 rounded-full bg-brand-primary"></div>
+
+        <!-- LAYER 2: Gray background (creates border effect) -->
+        <div id="circle-inner" class="absolute inset-0.5 rounded-full bg-brand-darker flex items-center justify-center">
+
+          <!-- LAYER 3 & 4: Center dots (pulsing) -->
+          <span class="flex items-center justify-center gap-1.5">
+            <div class="w-1.5 h-1.5 rounded-full bg-brand-primary pulse-dot"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-brand-primary pulse-dot"></div>
+          </span>
+
+          <!-- LAYER 5: Left brace -->
+          <span class="brace absolute text-white text-lg left-1 font-semibold" style="top: 50%; transform: translateY(-50%); font-family: Raleway, sans-serif;">
+            {
+          </span>
+
+          <!-- LAYER 6: Right brace -->
+          <span class="brace absolute text-white text-lg right-1 font-semibold" style="top: 50%; transform: translateY(-50%); font-family: Raleway, sans-serif;">
+            }
+          </span>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Text Content (hidden by default) -->
+    <div id="logo-text" class="absolute top-0 right-0 flex flex-col justify-center items-start h-12 text-transition" style="white-space: nowrap; opacity: 0;">
+
+      <!-- Name -->
+      <h1 class="uppercase flex gap-0.5 tracking-tight leading-none text-base text-white" style="font-family: Barlow, sans-serif;">
+        <span>Carlos</span>
+        <span class="text-brand-primary">Román</span>
+      </h1>
+
+      <!-- Rotating Role -->
+      <div class="lowercase font-light flex items-center leading-tight text-xs min-h-4 justify-start" style="font-family: 'Open Sans', sans-serif;">
+        <p id="role-text" class="text-white" style="opacity: 0.8;">Full Stack Developer</p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // ============================================
+    // CONFIGURATION & STATE
+    // ============================================
+
+    const roles = ['Full Stack Developer', 'Software Engineer', 'Solutions Developer'];
+    let currentRoleIndex = 0;
+    let roleInterval = null;
+
+    const DEFAULT_CONFIG = {
+      isVisible: true,
+      showText: false
+    };
+
+    // State tracking for transitions
+    let previousConfig = null;
+    let isAnimating = false;
+    let animationTimeouts = [];
+
+    // ============================================
+    // CONFIG MANAGEMENT
+    // ============================================
+
+    function loadConfig() {
+      const saved = localStorage.getItem('obs-logo-config');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return DEFAULT_CONFIG;
+    }
+
+    function detectStateChange(prev, curr) {
+      if (prev === null) return true; // Initial load
+
+      return (
+        prev.isVisible !== curr.isVisible ||
+        prev.showText !== curr.showText
+      );
+    }
+
+    function applyConfig(config) {
+      // Detect if this is a genuine state change
+      const isStateChange = detectStateChange(previousConfig, config);
+
+      // If no change and we're polling, skip processing
+      if (!isStateChange && previousConfig !== null) {
+        return;
+      }
+
+      // Cancel any in-flight animations
+      if (isAnimating) {
+        cancelAllAnimations();
+      }
+
+      const container = document.getElementById('logo-container');
+
+      // CASE 1: Visibility OFF (hide immediately, no animation)
+      if (!config.isVisible) {
+        hideLogoImmediate();
+        previousConfig = { ...config };
+        return;
+      }
+
+      // CASE 2: Visibility ON (check if transitioning from hidden)
+      const wasHidden = previousConfig === null || !previousConfig.isVisible;
+
+      if (wasHidden) {
+        // Trigger entrance animation sequence
+        playEntranceAnimation(config);
+      } else {
+        // Already visible, just update text state
+        if (config.showText !== previousConfig.showText) {
+          if (config.showText) {
+            showLogoWithText();
+          } else {
+            showLogoOnly();
+          }
+        }
+      }
+
+      previousConfig = { ...config };
+      console.log('📺 Logo overlay updated:', config);
+    }
+
+    // ============================================
+    // ENTRANCE ANIMATION SEQUENCE
+    // ============================================
+
+    function playEntranceAnimation(config) {
+      isAnimating = true;
+
+      const container = document.getElementById('logo-container');
+      const logoCircle = document.getElementById('logo-circle');
+      const greenCircle = document.getElementById('circle-outer');
+      const grayCircle = document.getElementById('circle-inner');
+      const braces = logoCircle.querySelectorAll('.brace');
+      const dots = logoCircle.querySelectorAll('.pulse-dot');
+      const logoText = document.getElementById('logo-text');
+
+      // Reset any previous animations
+      [greenCircle, grayCircle, ...braces, ...dots].forEach(el => {
+        el.classList.remove(
+          'animate-entrance-circle-outer',
+          'animate-entrance-circle-inner',
+          'animate-entrance-braces',
+          'animate-entrance-dots',
+          'reset-entrance'
+        );
+      });
+
+      // Force reflow to reset animations
+      void container.offsetWidth;
+
+      // Make container visible
+      container.style.opacity = '1';
+
+      // Ensure logo is in starting position
+      logoCircle.style.transform = 'translateX(0)';
+      logoText.style.opacity = '0';
+
+      // Apply animation classes
+      greenCircle.classList.add('animate-entrance-circle-outer');
+      grayCircle.classList.add('animate-entrance-circle-inner');
+      braces.forEach(brace => brace.classList.add('animate-entrance-braces'));
+      dots.forEach(dot => dot.classList.add('animate-entrance-dots'));
+
+      // Listen for animation completion on the last element
+      const lastAnimatingElement = dots[dots.length - 1];
+
+      const handleAnimationEnd = () => {
+        isAnimating = false;
+
+        // Apply final state classes (removes animation, sets opacity/scale)
+        [greenCircle, grayCircle, ...braces, ...dots].forEach(el => {
+          el.classList.remove(
+            'animate-entrance-circle-outer',
+            'animate-entrance-circle-inner',
+            'animate-entrance-braces',
+            'animate-entrance-dots'
+          );
+          el.classList.add('reset-entrance');
+        });
+
+        // Show text if enabled
+        if (config.showText) {
+          showLogoWithText();
+        }
+      };
+
+      lastAnimatingElement.addEventListener('animationend', handleAnimationEnd, { once: true });
+    }
+
+    // ============================================
+    // VISIBILITY CONTROLS
+    // ============================================
+
+    function hideLogoImmediate() {
+      const container = document.getElementById('logo-container');
+      container.style.opacity = '0';
+      stopRoleRotation();
+      isAnimating = false;
+    }
+
+    function showLogoOnly() {
+      const container = document.getElementById('logo-container');
+      const logoCircle = document.getElementById('logo-circle');
+      const logoText = document.getElementById('logo-text');
+
+      container.style.opacity = '1';
+      logoCircle.style.transform = 'translateX(0)';
+      logoText.style.opacity = '0';
+
+      stopRoleRotation();
+    }
+
+    function showLogoWithText() {
+      const container = document.getElementById('logo-container');
+      const logoCircle = document.getElementById('logo-circle');
+      const logoText = document.getElementById('logo-text');
+
+      container.style.opacity = '1';
+
+      // Move logo left to make space for text
+      logoCircle.style.transform = 'translateX(-115px)';
+
+      // Show text after logo starts moving
+      animationTimeouts.push(setTimeout(() => {
+        logoText.style.opacity = '1';
+      }, 600));
+
+      startRoleRotation();
+    }
+
+    // ============================================
+    // ANIMATION CLEANUP
+    // ============================================
+
+    function cancelAllAnimations() {
+      animationTimeouts.forEach(timeout => clearTimeout(timeout));
+      animationTimeouts = [];
+      isAnimating = false;
+    }
+
+    // ============================================
+    // ROLE ROTATION
+    // ============================================
+
+    function startRoleRotation() {
+      stopRoleRotation(); // Clear any existing interval
+
+      roleInterval = setInterval(() => {
+        currentRoleIndex = (currentRoleIndex + 1) % roles.length;
+        updateRoleText();
+      }, 4000);
+    }
+
+    function stopRoleRotation() {
+      if (roleInterval) {
+        clearInterval(roleInterval);
+        roleInterval = null;
+      }
+    }
+
+    function updateRoleText() {
+      const roleElement = document.getElementById('role-text');
+
+      // Fade out
+      roleElement.style.opacity = '0';
+
+      // Change text
+      setTimeout(() => {
+        roleElement.textContent = roles[currentRoleIndex];
+
+        // Fade in
+        setTimeout(() => {
+          roleElement.style.opacity = '0.8';
+        }, 50);
+      }, 400);
+    }
+
+    // ============================================
+    // LOCALSTORAGE SYNC
+    // ============================================
+
+    // Listen for storage changes (when controller updates config)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'obs-logo-config') {
+        const config = loadConfig();
+        applyConfig(config);
+      }
+    });
+
+    // Polling fallback (in case storage event doesn't fire in OBS CEF)
+    setInterval(() => {
+      const config = loadConfig();
+      applyConfig(config);
+    }, 1000);
+
+    // Apply initial config on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const config = loadConfig();
+      applyConfig(config);
+    });
+  </script>
+</body>
+</html>
