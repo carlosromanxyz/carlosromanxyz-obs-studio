@@ -108,17 +108,17 @@
       animation: slide-in-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.9s forwards;
     }
 
-    /* Apply exit animations - Reverse sequential timing */
+    /* Apply exit animations - Same order as entrance (border first) */
+    .live-container.animate-exit {
+      animation: fade-out-border 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+    }
+
     .live-text.animate-exit {
-      animation: slide-out-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+      animation: slide-out-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.4s forwards;
     }
 
     .live-label.animate-exit {
-      animation: slide-out-label 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.5s forwards;
-    }
-
-    .live-container.animate-exit {
-      animation: fade-out-border 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) 1.0s forwards;
+      animation: slide-out-label 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.4s forwards;
     }
 
     /* Initial state - hidden */
@@ -225,16 +225,16 @@
       // Force reflow
       void liveContainer.offsetWidth
 
-      // Apply exit animations (reverse order)
-      liveText.classList.add('animate-exit')
-      liveLabel.classList.add('animate-exit')
+      // Apply exit animations (same order: border first, then content)
       liveContainer.classList.add('animate-exit')
+      liveLabel.classList.add('animate-exit')
+      liveText.classList.add('animate-exit')
 
-      // Hide container after animation completes (1.4s total)
+      // Hide container after animation completes (0.9s total: 0.4s border + 0.5s slides)
       setTimeout(() => {
         const container = document.getElementById('live-indicator')
         container.classList.add('hidden')
-      }, 1400)
+      }, 900)
     }
 
     // Apply config to overlay with state transition detection
