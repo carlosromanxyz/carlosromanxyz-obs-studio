@@ -58,11 +58,15 @@
     .live-label {
       animation: slide-in-label 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
       opacity: 0;
+      position: relative;
+      z-index: 2; /* EN VIVO on top */
     }
 
     .live-text {
       animation: slide-in-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.5s forwards;
       opacity: 0; /* Start hidden, animation will show it after EN VIVO */
+      position: relative;
+      z-index: 1; /* SANTIAGO behind EN VIVO */
     }
 
     /* Smooth transitions */
