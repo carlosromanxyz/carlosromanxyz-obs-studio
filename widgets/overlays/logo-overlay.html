@@ -31,7 +31,7 @@
       background: transparent;
     }
 
-    /* Pulse animation for dots */
+    /* Pulse animation for dots (continuous, infinite) */
     @keyframes pulse-scale {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.2); }
@@ -45,9 +45,53 @@
       animation-delay: 0.5s;
     }
 
-    /* Smooth transitions */
+    /* Entrance animations - GPU accelerated only (opacity, transform) */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Animation utility classes - staggered entrance sequence */
+    .animate-entrance-outer {
+      animation: fadeIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.2s both;
+    }
+
+    .animate-entrance-inner {
+      animation: fadeInScale 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.2s both;
+    }
+
+    .animate-entrance-braces {
+      animation: fadeIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.8s both;
+    }
+
+    .animate-entrance-dots {
+      animation: fadeIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 1.0s both;
+    }
+
+    /* Exit animation (fade out) */
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    .animate-exit {
+      animation: fadeOut 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+    }
+
+    /* Smooth transitions (for lateral movement when text appears) */
     .logo-transition {
-      transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+      transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1.0);
     }
 
     .text-transition {
@@ -57,32 +101,43 @@
 </head>
 <body>
 
-  <!-- Logo Container -->
-  <div id="logo-container" class="fixed top-32 right-28" style="width: 200px; height: 48px; transform: scale(2); transform-origin: right top;">
+  <!--
+    Logo Overlay Container
+    - role="img": Indicates this entire structure represents a single logo image
+    - aria-label: Provides text alternative for the visual logo
+    - aria-hidden: Toggles to "true" when logo is hidden (OBS overlay is purely decorative)
+  -->
+  <div
+    id="logo-container"
+    role="img"
+    aria-label="Carlos Román - Full Stack Developer Logo"
+    aria-hidden="true"
+    class="fixed top-32 right-28"
+    style="width: 200px; height: 48px; transform: scale(2); transform-origin: right top;">
 
     <!-- Logo Circle (moves left when text appears) -->
     <div id="logo-circle" class="absolute top-0 right-0 logo-transition" style="transform: translateX(0);">
       <div class="relative h-12 w-12">
 
-        <!-- LAYER 1: Green border circle -->
-        <div class="absolute inset-0 rounded-full bg-brand-primary"></div>
+        <!-- LAYER 1: Green border circle (animatable) -->
+        <div id="circle-outer" class="absolute inset-0 rounded-full bg-brand-primary opacity-0"></div>
 
-        <!-- LAYER 2: Gray background (creates border effect) -->
-        <div class="absolute inset-0.5 rounded-full bg-brand-darker flex items-center justify-center">
+        <!-- LAYER 2: Gray background - creates border effect (animatable) -->
+        <div id="circle-inner" class="absolute inset-0.5 rounded-full bg-brand-darker flex items-center justify-center opacity-0" style="transform: scale(1);">
 
-          <!-- LAYER 3 & 4: Center dots (pulsing) -->
-          <span class="flex items-center justify-center gap-1.5">
+          <!-- LAYER 3 & 4: Center dots (pulsing, animatable) -->
+          <span id="dots-container" class="flex items-center justify-center gap-1.5 opacity-0">
             <div class="w-1.5 h-1.5 rounded-full bg-brand-primary pulse-dot"></div>
             <div class="w-1.5 h-1.5 rounded-full bg-brand-primary pulse-dot"></div>
           </span>
 
-          <!-- LAYER 5: Left brace -->
-          <span class="absolute text-white text-lg left-1 font-semibold" style="top: 50%; transform: translateY(-50%); font-family: Raleway, sans-serif;">
+          <!-- LAYER 5: Left brace (animatable) -->
+          <span id="brace-left" class="absolute text-white text-lg left-1 font-semibold opacity-0" style="top: 50%; transform: translateY(-50%); font-family: Raleway, sans-serif;">
             {
           </span>
 
-          <!-- LAYER 6: Right brace -->
-          <span class="absolute text-white text-lg right-1 font-semibold" style="top: 50%; transform: translateY(-50%); font-family: Raleway, sans-serif;">
+          <!-- LAYER 6: Right brace (animatable) -->
+          <span id="brace-right" class="absolute text-white text-lg right-1 font-semibold opacity-0" style="top: 50%; transform: translateY(-50%); font-family: Raleway, sans-serif;">
             }
           </span>
 
@@ -90,18 +145,18 @@
       </div>
     </div>
 
-    <!-- Text Content (hidden by default) -->
-    <div id="logo-text" class="absolute top-0 right-0 flex flex-col justify-center items-start h-12 text-transition" style="white-space: nowrap; opacity: 0;">
+    <!-- Text Content (presentational, hidden by default) -->
+    <div id="logo-text" class="absolute top-0 right-0 flex flex-col justify-center items-start h-12 text-transition" style="white-space: nowrap; opacity: 0;" aria-hidden="true">
 
-      <!-- Name -->
-      <h1 class="uppercase flex gap-0.5 tracking-tight leading-none text-base text-white" style="font-family: Barlow, sans-serif;">
+      <!-- Name (presentational text, not heading) -->
+      <div class="uppercase flex gap-0.5 tracking-tight leading-none text-base text-white" style="font-family: Barlow, sans-serif;">
         <span>Carlos</span>
         <span class="text-brand-primary">Román</span>
-      </h1>
+      </div>
 
-      <!-- Rotating Role -->
+      <!-- Rotating Role (presentational text) -->
       <div class="lowercase font-light flex items-center leading-tight text-xs min-h-4 justify-start" style="font-family: 'Open Sans', sans-serif;">
-        <p id="role-text" class="text-white" style="opacity: 0.8;">Full Stack Developer</p>
+        <div id="role-text" class="text-white" style="opacity: 0.8;">Full Stack Developer</div>
       </div>
 
     </div>
@@ -113,6 +168,9 @@
     const roles = ['Full Stack Developer', 'Software Engineer', 'Solutions Developer']
     let currentRoleIndex = 0
     let roleInterval = null
+
+    // State Transition Manager - tracks previous config to detect state changes
+    let previousConfig = null
 
     // Config default
     const DEFAULT_CONFIG = {
@@ -129,29 +187,101 @@
       return DEFAULT_CONFIG
     }
 
-    // Apply config to overlay
+    // Detect if state actually changed (prevents redundant processing during polling)
+    function detectStateChange(prev, curr) {
+      if (prev === null) return true // First load
+      return prev.isVisible !== curr.isVisible || prev.showText !== curr.showText
+    }
+
+    // Apply config to overlay with state transition detection
     function applyConfig(config) {
       const container = document.getElementById('logo-container')
 
+      // Detect if this is an actual state change
+      const isStateChange = detectStateChange(previousConfig, config)
+
+      if (!isStateChange && previousConfig !== null) {
+        return // Skip if polling with no change
+      }
+
+      // Update aria-hidden attribute based on visibility
+      container.setAttribute('aria-hidden', !config.isVisible ? 'true' : 'false')
+
       // Check visibility first
       if (!config.isVisible) {
-        container.style.opacity = '0'
-        stopRoleRotation()
+        hideLogoWithExit()
+        previousConfig = { ...config }
         return
       }
 
+      // Detect entrance transition (false → true or initial load)
+      const wasHidden = !previousConfig || !previousConfig.isVisible
+      const isNowVisible = config.isVisible
+
       // Show logo with or without text
       if (config.showText) {
-        showLogoWithText()
+        showLogoWithText(wasHidden && isNowVisible)
       } else {
-        showLogoOnly()
+        showLogoOnly(wasHidden && isNowVisible)
       }
 
-      console.log('📺 Logo overlay updated:', config)
+      // Store current config as previous for next comparison
+      previousConfig = { ...config }
+
+      console.log('📺 Logo overlay updated:', config, 'wasHidden:', wasHidden)
     }
 
-    // Show logo only (no text)
-    function showLogoOnly() {
+    // Play entrance animation sequence (staggered reveal)
+    function playEntranceAnimation() {
+      const circleOuter = document.getElementById('circle-outer')
+      const circleInner = document.getElementById('circle-inner')
+      const braceLeft = document.getElementById('brace-left')
+      const braceRight = document.getElementById('brace-right')
+      const dotsContainer = document.getElementById('dots-container')
+
+      // Remove any existing animation classes (cleanup)
+      const elements = [circleOuter, circleInner, braceLeft, braceRight, dotsContainer]
+      elements.forEach(el => {
+        el.classList.remove('animate-entrance-outer', 'animate-entrance-inner', 'animate-entrance-braces', 'animate-entrance-dots', 'animate-exit')
+      })
+
+      // Force reflow to restart animations (critical for re-triggering)
+      void circleOuter.offsetWidth
+
+      // Apply staggered entrance animations
+      circleOuter.classList.add('animate-entrance-outer')
+      circleInner.classList.add('animate-entrance-inner')
+      braceLeft.classList.add('animate-entrance-braces')
+      braceRight.classList.add('animate-entrance-braces')
+      dotsContainer.classList.add('animate-entrance-dots')
+    }
+
+    // Hide logo with exit animation
+    function hideLogoWithExit() {
+      const container = document.getElementById('logo-container')
+      const circleOuter = document.getElementById('circle-outer')
+      const circleInner = document.getElementById('circle-inner')
+      const braceLeft = document.getElementById('brace-left')
+      const braceRight = document.getElementById('brace-right')
+      const dotsContainer = document.getElementById('dots-container')
+
+      // Apply exit animation to all layers
+      const elements = [circleOuter, circleInner, braceLeft, braceRight, dotsContainer]
+      elements.forEach(el => {
+        el.classList.remove('animate-entrance-outer', 'animate-entrance-inner', 'animate-entrance-braces', 'animate-entrance-dots')
+        el.classList.add('animate-exit')
+      })
+
+      // Hide container after animation completes (500ms = animation duration)
+      setTimeout(() => {
+        container.style.opacity = '0'
+      }, 500)
+
+      stopRoleRotation()
+    }
+
+    // Show logo only (no text) - with optional entrance animation
+    function showLogoOnly(shouldAnimate = false) {
       const container = document.getElementById('logo-container')
       const logoCircle = document.getElementById('logo-circle')
       const logoText = document.getElementById('logo-text')
@@ -160,26 +290,36 @@
       logoCircle.style.transform = 'translateX(0)'
       logoText.style.opacity = '0'
 
+      // Trigger entrance animation if this is a state transition
+      if (shouldAnimate) {
+        playEntranceAnimation()
+      }
+
       stopRoleRotation()
     }
 
-    // Show logo with text
-    function showLogoWithText() {
+    // Show logo with text - with optional entrance animation
+    function showLogoWithText(shouldAnimate = false) {
       const container = document.getElementById('logo-container')
       const logoCircle = document.getElementById('logo-circle')
       const logoText = document.getElementById('logo-text')
 
       container.style.opacity = '1'
 
-      // Move logo left to make space for text
+      // Trigger entrance animation if this is a state transition
+      if (shouldAnimate) {
+        playEntranceAnimation()
+      }
+
+      // Move logo left to make space for text (after entrance animation completes)
       setTimeout(() => {
         logoCircle.style.transform = 'translateX(-115px)'
-      }, 50)
+      }, shouldAnimate ? 1550 : 50) // Wait for entrance (1.5s) + buffer if animating
 
       // Show text after logo moves
       setTimeout(() => {
         logoText.style.opacity = '1'
-      }, 650)
+      }, shouldAnimate ? 2150 : 650) // Adjusted timing for animation
 
       startRoleRotation()
     }
