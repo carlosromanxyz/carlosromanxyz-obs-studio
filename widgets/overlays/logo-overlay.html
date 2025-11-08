@@ -300,8 +300,14 @@
       const braceLeft = document.getElementById('brace-left')
       const braceRight = document.getElementById('brace-right')
       const dotsContainer = document.getElementById('dots-container')
+      const logoText = document.getElementById('logo-text')
 
-      // Apply exit animation to all layers
+      // Hide text with exit animation if it's visible
+      if (logoText.style.opacity !== '0') {
+        hideLogoText()
+      }
+
+      // Apply exit animation to all logo layers
       const elements = [circleOuter, circleInner, braceLeft, braceRight, dotsContainer]
       elements.forEach(el => {
         el.classList.remove('animate-entrance-outer', 'animate-entrance-inner', 'animate-entrance-braces', 'animate-entrance-dots')
