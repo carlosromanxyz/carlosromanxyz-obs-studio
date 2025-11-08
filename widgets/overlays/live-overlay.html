@@ -35,12 +35,8 @@
 
     /* Step 1: Border fade-in */
     @keyframes fade-in-border {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     /* Step 2: EN VIVO slide from left */
@@ -67,22 +63,78 @@
       }
     }
 
-    /* Apply animations - Sequential timing */
-    .live-container {
+    /* 3-step exit animation sequence (reverse order) */
+
+    /* Step 1: SANTIAGO slide out to left */
+    @keyframes slide-out-text {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+    }
+
+    /* Step 2: EN VIVO slide out to left */
+    @keyframes slide-out-label {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+    }
+
+    /* Step 3: Border fade-out */
+    @keyframes fade-out-border {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    /* Apply entrance animations - Sequential timing */
+    .live-container.animate-entrance {
       animation: fade-in-border 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+    }
+
+    .live-label.animate-entrance {
+      animation: slide-in-label 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.4s forwards;
+    }
+
+    .live-text.animate-entrance {
+      animation: slide-in-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.9s forwards;
+    }
+
+    /* Apply exit animations - Reverse sequential timing */
+    .live-text.animate-exit {
+      animation: slide-out-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+    }
+
+    .live-label.animate-exit {
+      animation: slide-out-label 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.5s forwards;
+    }
+
+    .live-container.animate-exit {
+      animation: fade-out-border 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) 1.0s forwards;
+    }
+
+    /* Initial state - hidden */
+    .live-container,
+    .live-label,
+    .live-text {
       opacity: 0;
     }
 
+    /* Layer order */
     .live-label {
-      animation: slide-in-label 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.4s forwards;
-      opacity: 0;
       position: relative;
       z-index: 2; /* EN VIVO on top */
     }
 
     .live-text {
-      animation: slide-in-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.9s forwards;
-      opacity: 0; /* Start hidden, animation will show it after EN VIVO */
       position: relative;
       z-index: 1; /* SANTIAGO behind EN VIVO */
     }
@@ -114,6 +166,9 @@
   </div>
 
   <script>
+    // State Transition Manager - tracks previous config to detect state changes
+    let previousConfig = null
+
     // Config default
     const DEFAULT_CONFIG = {
       text: 'SANTIAGO',
@@ -130,30 +185,106 @@
       return DEFAULT_CONFIG
     }
 
-    // Apply config to overlay
+    // Detect if state actually changed (prevents redundant processing during polling)
+    function detectStateChange(prev, curr) {
+      if (prev === null) return true // First load
+      return prev.isVisible !== curr.isVisible || prev.text !== curr.text || prev.aspectRatio !== curr.aspectRatio
+    }
+
+    // Play entrance animation
+    function playEntranceAnimation() {
+      const liveContainer = document.querySelector('.live-container')
+      const liveLabel = document.querySelector('.live-label')
+      const liveText = document.querySelector('.live-text')
+
+      // Remove any exit animations
+      liveContainer.classList.remove('animate-exit')
+      liveLabel.classList.remove('animate-exit')
+      liveText.classList.remove('animate-exit')
+
+      // Force reflow
+      void liveContainer.offsetWidth
+
+      // Apply entrance animations
+      liveContainer.classList.add('animate-entrance')
+      liveLabel.classList.add('animate-entrance')
+      liveText.classList.add('animate-entrance')
+    }
+
+    // Play exit animation
+    function playExitAnimation() {
+      const liveContainer = document.querySelector('.live-container')
+      const liveLabel = document.querySelector('.live-label')
+      const liveText = document.querySelector('.live-text')
+
+      // Remove entrance animations
+      liveContainer.classList.remove('animate-entrance')
+      liveLabel.classList.remove('animate-entrance')
+      liveText.classList.remove('animate-entrance')
+
+      // Force reflow
+      void liveContainer.offsetWidth
+
+      // Apply exit animations (reverse order)
+      liveText.classList.add('animate-exit')
+      liveLabel.classList.add('animate-exit')
+      liveContainer.classList.add('animate-exit')
+
+      // Hide container after animation completes (1.4s total)
+      setTimeout(() => {
+        const container = document.getElementById('live-indicator')
+        container.classList.add('hidden')
+      }, 1400)
+    }
+
+    // Apply config to overlay with state transition detection
     function applyConfig(config) {
       const container = document.getElementById('live-indicator')
       const locationText = document.getElementById('live-location')
 
+      // Detect if this is an actual state change
+      const isStateChange = detectStateChange(previousConfig, config)
+
+      if (!isStateChange && previousConfig !== null) {
+        return // Skip if polling with no change
+      }
+
       // Update position based on aspect ratio
       // 16:9 → left-40 (160px), 4:3 → left-80 (320px)
+      const baseClasses = 'fixed top-32'
       if (config.aspectRatio === '4:3') {
-        container.className = 'fixed top-32 left-80'
+        container.className = baseClasses + ' left-80'
       } else {
-        container.className = 'fixed top-32 left-40'
+        container.className = baseClasses + ' left-40'
       }
 
       // Update location text
       locationText.textContent = config.text || 'SANTIAGO'
 
-      // Show/hide based on visibility
-      if (config.isVisible) {
+      // Detect entrance transition (false → true or initial load)
+      const wasHidden = !previousConfig || !previousConfig.isVisible
+      const isNowVisible = config.isVisible
+
+      // Show/hide with animations
+      if (isNowVisible) {
         container.classList.remove('hidden')
+        if (wasHidden) {
+          playEntranceAnimation()
+        }
       } else {
-        container.classList.add('hidden')
+        if (previousConfig && previousConfig.isVisible) {
+          // Was visible, now hiding - play exit animation
+          playExitAnimation()
+        } else {
+          // Already hidden
+          container.classList.add('hidden')
+        }
       }
 
-      console.log('📺 Live overlay updated:', config)
+      // Store current config as previous for next comparison
+      previousConfig = { ...config }
+
+      console.log('📺 Live overlay updated:', config, 'wasHidden:', wasHidden)
     }
 
     // Listen for storage changes (when controller updates config)
