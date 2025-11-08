@@ -102,6 +102,37 @@
     #role-text {
       transition: opacity 0.4s ease-out;
     }
+
+    /* Text entrance/exit animations */
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideOutRight {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+    }
+
+    .animate-text-entrance {
+      animation: slideInRight 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+    }
+
+    .animate-text-exit {
+      animation: slideOutRight 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+    }
   </style>
 </head>
 <body>
@@ -293,7 +324,9 @@
 
       container.style.opacity = '1'
       logoCircle.style.transform = 'translateX(0)'
-      logoText.style.opacity = '0'
+
+      // Hide text with exit animation or instantly
+      hideLogoText()
 
       // Trigger entrance animation if this is a state transition
       if (shouldAnimate) {
@@ -321,12 +354,46 @@
         logoCircle.style.transform = 'translateX(-115px)'
       }, shouldAnimate ? 1550 : 50) // Wait for entrance (1.5s) + buffer if animating
 
-      // Show text after logo moves
+      // Show text with entrance animation after logo moves
       setTimeout(() => {
-        logoText.style.opacity = '1'
+        showLogoTextWithAnimation()
       }, shouldAnimate ? 2150 : 650) // Adjusted timing for animation
 
       startRoleRotation()
+    }
+
+    // Show text with entrance animation
+    function showLogoTextWithAnimation() {
+      const logoText = document.getElementById('logo-text')
+
+      // Remove exit animation if present
+      logoText.classList.remove('animate-text-exit')
+
+      // Force reflow
+      void logoText.offsetWidth
+
+      // Apply entrance animation
+      logoText.classList.add('animate-text-entrance')
+      logoText.style.opacity = '1'
+    }
+
+    // Hide text with exit animation
+    function hideLogoText() {
+      const logoText = document.getElementById('logo-text')
+
+      // Remove entrance animation if present
+      logoText.classList.remove('animate-text-entrance')
+
+      // Force reflow
+      void logoText.offsetWidth
+
+      // Apply exit animation
+      logoText.classList.add('animate-text-exit')
+
+      // Set opacity to 0 after animation completes
+      setTimeout(() => {
+        logoText.style.opacity = '0'
+      }, 400) // Match animation duration
     }
 
     // Start rotating roles
