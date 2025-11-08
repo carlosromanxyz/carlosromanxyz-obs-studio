@@ -31,22 +31,10 @@
       background: transparent;
     }
 
-    /* Width expansion animation */
-    @keyframes expand-width {
-      from {
-        width: 0;
-        opacity: 0;
-      }
-      to {
-        width: auto;
-        opacity: 1;
-      }
-    }
-
-    /* Slide from left animations */
+    /* Slide from left animations - Sequential entrance */
     @keyframes slide-in-label {
       from {
-        transform: translateX(-100px);
+        transform: translateX(-100%);
         opacity: 0;
       }
       to {
@@ -57,7 +45,7 @@
 
     @keyframes slide-in-text {
       from {
-        transform: translateX(-50px);
+        transform: translateX(-100%);
         opacity: 0;
       }
       to {
@@ -66,18 +54,15 @@
       }
     }
 
-    /* Apply animations */
-    .live-container {
-      animation: expand-width 0.6s ease-in-out forwards;
-    }
-
+    /* Apply animations - Sequential timing */
     .live-label {
-      animation: slide-in-label 0.4s ease-in-out forwards;
+      animation: slide-in-label 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+      opacity: 0;
     }
 
     .live-text {
-      animation: slide-in-text 0.4s ease-in-out 0.4s forwards;
-      opacity: 0; /* Start hidden, animation will show it */
+      animation: slide-in-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.5s forwards;
+      opacity: 0; /* Start hidden, animation will show it after EN VIVO */
     }
 
     /* Smooth transitions */
