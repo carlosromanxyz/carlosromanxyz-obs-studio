@@ -31,7 +31,19 @@
       background: transparent;
     }
 
-    /* Slide from left animations - Sequential entrance */
+    /* 3-step entrance animation sequence */
+
+    /* Step 1: Border fade-in */
+    @keyframes fade-in-border {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Step 2: EN VIVO slide from left */
     @keyframes slide-in-label {
       from {
         transform: translateX(-100%);
@@ -43,6 +55,7 @@
       }
     }
 
+    /* Step 3: SANTIAGO slide from left */
     @keyframes slide-in-text {
       from {
         transform: translateX(-100%);
@@ -55,15 +68,20 @@
     }
 
     /* Apply animations - Sequential timing */
+    .live-container {
+      animation: fade-in-border 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+      opacity: 0;
+    }
+
     .live-label {
-      animation: slide-in-label 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+      animation: slide-in-label 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.4s forwards;
       opacity: 0;
       position: relative;
       z-index: 2; /* EN VIVO on top */
     }
 
     .live-text {
-      animation: slide-in-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.5s forwards;
+      animation: slide-in-text 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.9s forwards;
       opacity: 0; /* Start hidden, animation will show it after EN VIVO */
       position: relative;
       z-index: 1; /* SANTIAGO behind EN VIVO */
