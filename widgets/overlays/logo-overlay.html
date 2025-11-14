@@ -133,6 +133,11 @@
     .animate-text-exit {
       animation: slideOutRight 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
     }
+
+    /* Smooth position transitions for aspect ratio changes */
+    #logo-container {
+      transition: left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0), right 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+    }
   </style>
 </head>
 <body>
@@ -148,7 +153,6 @@
     role="img"
     aria-label="Carlos Román - Full Stack Developer Logo"
     aria-hidden="true"
-    class="fixed top-32 right-28"
     style="width: 200px; height: 48px; transform: scale(2); transform-origin: right top;">
 
     <!-- Logo Circle (moves left when text appears) -->
@@ -207,11 +211,17 @@
 
     // State Transition Manager - tracks previous config to detect state changes
     let previousConfig = null
+    let previousAspectRatio = null
 
     // Config default
     const DEFAULT_CONFIG = {
       isVisible: true,
       showText: false
+    }
+
+    // Global config
+    const DEFAULT_GLOBAL_CONFIG = {
+      aspectRatio: '16:9'
     }
 
     // Load config from localStorage
@@ -223,6 +233,15 @@
       return DEFAULT_CONFIG
     }
 
+    // Load global config
+    function loadGlobalConfig() {
+      const saved = localStorage.getItem('obs-global-config')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+      return DEFAULT_GLOBAL_CONFIG
+    }
+
     // Detect if state actually changed (prevents redundant processing during polling)
     function detectStateChange(prev, curr) {
       if (prev === null) return true // First load
@@ -232,12 +251,29 @@
     // Apply config to overlay with state transition detection
     function applyConfig(config) {
       const container = document.getElementById('logo-container')
+      const globalConfig = loadGlobalConfig()
 
       // Detect if this is an actual state change
       const isStateChange = detectStateChange(previousConfig, config)
+      const isAspectRatioChange = previousAspectRatio !== globalConfig.aspectRatio
 
-      if (!isStateChange && previousConfig !== null) {
+      if (!isStateChange && !isAspectRatioChange && previousConfig !== null) {
         return // Skip if polling with no change
+      }
+
+      // Update position based on aspect ratio
+      // 16:9 → right-28 (112px), 4:3 → right-96 (384px) - safe zone for 4:3
+      const baseClasses = 'fixed top-32'
+      if (globalConfig.aspectRatio === '4:3') {
+        container.className = baseClasses + ' right-96'
+      } else {
+        container.className = baseClasses + ' right-28'
+      }
+
+      // Track aspect ratio changes
+      if (isAspectRatioChange) {
+        console.log('📺 Logo - Aspect ratio changed to:', globalConfig.aspectRatio)
+        previousAspectRatio = globalConfig.aspectRatio
       }
 
       // Update aria-hidden attribute based on visibility

@@ -29,6 +29,7 @@ python3 server/serve.py
 # Test overlays in browser
 open http://localhost:8080/widgets/overlays/logo-overlay.html
 open http://localhost:8080/widgets/overlays/live-overlay.html
+open http://localhost:8080/widgets/overlays/indicators-overlay.html
 
 # Test unified controller
 open http://localhost:8080/widgets/controllers/overlays-controller.html
@@ -64,10 +65,13 @@ carlosromanxyz-obs-studio/
 │   │   └── overlays-controller.html  # Unified controller (OBS Custom Dock)
 │   ├── overlays/                     # OBS Browser Source visuals
 │   │   ├── logo-overlay.html         # Logo widget overlay
-│   │   └── live-overlay.html         # Live indicator overlay
+│   │   ├── live-overlay.html         # Live indicator overlay
+│   │   └── indicators-overlay.html   # Economic indicators overlay
 │   └── js/                           # Widget logic modules
 │       ├── logo-widget.js            # Logo widget controller logic
 │       ├── live-widget.js            # Live widget controller logic
+│       ├── indicators-widget.js      # Economic indicators controller logic
+│       ├── indicators-data.js        # Economic indicators API utility
 │       ├── obs-connection.js         # OBS WebSocket connection
 │       └── accordion.js              # Accordion UI utility
 ├── server/
@@ -223,9 +227,22 @@ Follow this step-by-step process:
 ## Common Implementation Patterns
 
 See reference implementations:
-- **Overlays**: `logo-overlay.html` (animated element), `live-overlay.html` (text input, aspect ratio)
-- **Widget Modules**: `logo-widget.js` (toggle controls), `live-widget.js` (debounced text input)
+- **Overlays**: `logo-overlay.html` (animated element), `live-overlay.html` (text input, aspect ratio), `indicators-overlay.html` (external API data display)
+- **Widget Modules**: `logo-widget.js` (toggle controls), `live-widget.js` (debounced text input), `indicators-widget.js` (async data fetching)
+- **Data Utilities**: `indicators-data.js` (external API fetching with 4-hour cache-first strategy)
 - **Shared Utilities**: `accordion.js` (accordion UI), `obs-connection.js` (optional WebSocket)
+
+### External API Integration Pattern (Indicators Widget)
+When fetching external data, follow this cache-first pattern:
+1. **Data Utility Module** (`{widget}-data.js`):
+   - Define API endpoints and cache TTL constants
+   - Implement `loadFromCache()` to check localStorage validity
+   - Implement `saveToCache()` with timestamp
+   - Implement `fetchIndicator()` with timeout handling
+   - Export async function that tries cache first, then network
+2. **Widget Module** imports data utility and handles UI state (loading, errors)
+3. **Overlay** displays data from config, refreshed via polling
+4. **Controller** triggers refresh via button, shows last updated time
 
 ## Troubleshooting
 
@@ -272,9 +289,9 @@ Commit message convention (conventional commits):
 Current widgets in production:
 - **Logo Widget** (`logo-overlay.html` + `logo-widget.js`) - Animated logo with text toggle
 - **Live Widget** (`live-overlay.html` + `live-widget.js`) - "EN VIVO" indicator with location text
+- **Economic Indicators Widget** (`indicators-overlay.html` + `indicators-widget.js` + `indicators-data.js`) - Chilean economic indicators (UF, UTM, IPC, Dólar) from Boostr API with 4-hour caching
 
 Planned widgets:
-- Economic Indicators (UF, UTM, IPC, Dólar from Chilean APIs)
 - Lower Third Graphics
 - YouTube Carousel (Streamlink integration)
 

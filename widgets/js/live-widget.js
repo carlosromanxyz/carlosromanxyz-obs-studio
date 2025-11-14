@@ -5,8 +5,7 @@
 // Config por defecto
 const DEFAULT_LIVE_CONFIG = {
   text: 'SANTIAGO',
-  isVisible: false,
-  aspectRatio: '16:9'
+  isVisible: false
 }
 
 // Cargar config desde localStorage

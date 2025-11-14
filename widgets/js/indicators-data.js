@@ -81,18 +81,24 @@ async function fetchIndicatorFromAPI(indicator) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
 
-    const data = await response.json()
+    const response_data = await response.json()
 
     // Validate response structure
-    if (!data || typeof data.value !== 'number') {
+    if (!response_data || response_data.status !== 'success' || !response_data.data) {
       throw new Error('Invalid API response structure')
+    }
+
+    const data = response_data.data
+
+    if (typeof data.value !== 'number') {
+      throw new Error('Invalid value in API response')
     }
 
     return {
       indicator,
       value: data.value,
-      unit: data.unit || INDICATORS[indicator].unit,
-      date: data.date || new Date().toISOString()
+      unit: INDICATORS[indicator].unit,
+      date: data.date || new Date().toISOString().split('T')[0]
     }
 
   } catch (error) {

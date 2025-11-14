@@ -160,6 +160,41 @@
     </div>
   </div>
 
+  <!-- Global Settings Accordion -->
+  <div class="border border-zinc-700 rounded-lg overflow-hidden">
+    <!-- Header -->
+    <div class="flex items-center gap-3 p-3 bg-zinc-800 hover:bg-zinc-700 transition-colors">
+      <span class="text-sm font-medium flex-1 cursor-pointer" onclick="toggleAccordion('global')">Configuración Global</span>
+      <!-- Chevron -->
+      <svg id="global-chevron" class="w-4 h-4 text-zinc-400 transition-transform duration-200 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="toggleAccordion('global')">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </div>
+    <!-- Content -->
+    <div id="global-content" class="bg-zinc-800/50 border-t border-zinc-700 hidden">
+      <div class="p-3 space-y-3">
+        <!-- Aspect Ratio Toggle -->
+        <label class="flex items-center justify-between p-2 hover:bg-zinc-700/50 rounded cursor-pointer">
+          <div class="flex-1">
+            <div class="text-sm text-zinc-300 font-medium">Modo 4:3 (Safe zone)</div>
+            <div class="text-xs text-zinc-400 mt-0.5">
+              <span id="aspect-ratio-label">Desactivado - 16:9 Widescreen</span>
+            </div>
+          </div>
+          <div class="relative">
+            <input
+              type="checkbox"
+              id="aspect-ratio-toggle"
+              class="sr-only peer"
+              onchange="handleAspectRatioToggle(this.checked)"
+            >
+            <div class="w-11 h-6 bg-zinc-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary"></div>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Widget Scripts -->
   <script src="../js/obs-connection.js"></script>
@@ -168,6 +203,7 @@
   <script src="../js/live-widget.js"></script>
   <script src="../js/indicators-data.js"></script>
   <script src="../js/indicators-widget.js"></script>
+  <script src="../js/aspect-ratio-widget.js"></script>
 
   <!-- Initialize -->
   <script>
@@ -175,6 +211,7 @@
       initLogoWidget()
       initLiveWidget()
       initIndicatorsWidget()
+      initAspectRatioWidget()
       connectOBS()
     })
   </script>

@@ -43,10 +43,10 @@
       }
     }
 
-    @keyframes fadeInDown {
+    @keyframes fadeInUp {
       from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(10px);
       }
       to {
         opacity: 1;
@@ -73,11 +73,11 @@
     /* Staggered entrance sequence (1.2s total) */
     .animate-entrance-container {
       animation: fadeInScaleY 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
-      transform-origin: top;
+      transform-origin: bottom;
     }
 
     .animate-entrance-header {
-      animation: fadeInDown 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.2s both;
+      animation: fadeInUp 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.2s both;
     }
 
     .animate-entrance-row-1 {
@@ -156,14 +156,19 @@
     .indicator-transition {
       transition: all 0.3s ease-out;
     }
+
+    /* Smooth position transitions for aspect ratio changes */
+    #indicators-widget {
+      transition: left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0), right 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+    }
   </style>
 </head>
 <body>
 
   <!-- Indicators Container -->
-  <div id="indicators-widget" class="fixed top-32 right-28 hidden">
+  <div id="indicators-widget" class="hidden">
     <!-- Card Container -->
-    <div class="indicators-container bg-gradient-to-b from-zinc-900 to-black border-2 border-brand-primary rounded-lg overflow-hidden" style="width: 280px; transform: scaleY(1); transform-origin: top;">
+    <div class="indicators-container bg-gradient-to-b from-zinc-900 to-black border-2 border-brand-primary rounded-lg overflow-hidden" style="width: 280px; transform: scaleY(1); transform-origin: bottom;">
 
       <!-- Header -->
       <div class="indicators-header bg-gradient-to-r from-brand-dark to-brand-accent px-4 py-2">
@@ -229,6 +234,7 @@
     // State Transition Manager - tracks previous config to detect state changes
     let previousConfig = null
     let previousValues = {}
+    let previousAspectRatio = null
 
     // Config default
     const DEFAULT_CONFIG = {
@@ -237,6 +243,20 @@
       lastUpdated: null,
       isLoading: false,
       errors: {}
+    }
+
+    // Global config
+    const DEFAULT_GLOBAL_CONFIG = {
+      aspectRatio: '16:9'
+    }
+
+    // Load global config
+    function loadGlobalConfig() {
+      const saved = localStorage.getItem('obs-global-config')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+      return DEFAULT_GLOBAL_CONFIG
     }
 
     // Load config from localStorage
@@ -363,12 +383,29 @@
     // Apply config to overlay with state transition detection
     function applyConfig(config) {
       const widget = document.getElementById('indicators-widget')
+      const globalConfig = loadGlobalConfig()
 
       // Detect if this is an actual state change
       const isStateChange = detectStateChange(previousConfig, config)
+      const isAspectRatioChange = previousAspectRatio !== globalConfig.aspectRatio
 
-      if (!isStateChange && previousConfig !== null) {
+      if (!isStateChange && !isAspectRatioChange && previousConfig !== null) {
         return // Skip if polling with no change
+      }
+
+      // Update position based on aspect ratio
+      // 16:9 → left-28 (112px), 4:3 → left-96 (384px) - safe zone for 4:3
+      const baseClasses = 'fixed bottom-32'
+      if (globalConfig.aspectRatio === '4:3') {
+        widget.className = baseClasses + ' left-96'
+      } else {
+        widget.className = baseClasses + ' left-28'
+      }
+
+      // Track aspect ratio changes
+      if (isAspectRatioChange) {
+        console.log('📺 Indicators - Aspect ratio changed to:', globalConfig.aspectRatio)
+        previousAspectRatio = globalConfig.aspectRatio
       }
 
       // Detect entrance transition (false → true or initial load)
