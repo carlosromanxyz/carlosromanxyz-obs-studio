@@ -39,53 +39,146 @@ Carrusel tipo slideshow que muestra **pantallas completas** de información de d
 
 ## Características Principales
 
-### 1. **Rotación Automática**
-- Cambia de stream cada 8-10 segundos
-- Transición suave con fade + slide
-- Pausa automática al hacer hover (en controller)
+### 1. **Transición Tipo Slideshow**
+- Cada pantalla completa muestra un stream diferente
+- **Fade out → Fade in** entre pantallas (sin slides laterales)
+- Rotación automática cada 10-12 segundos
+- Toda la pantalla desaparece suavemente y aparece la siguiente
 
-### 2. **Información Mostrada**
-- **Thumbnail**: Imagen del stream en vivo (desde YouTube API)
-- **Nombre del canal**: Con icono 📺
-- **Título del stream**: Truncado con "..." si es muy largo
-- **Viewers en vivo**: Contador actualizado (ej: 👁 12,345)
-- **Duración del stream**: Tiempo que lleva en vivo (ej: ⏱ 2:34:15)
-- **Indicador LIVE**: Badge rojo pulsante
+### 2. **Cada Pantalla Muestra**
+- **Thumbnail grande**: 480x270px (16:9) - imagen prominente del stream
+- **Badge "EN VIVO"**: Rojo pulsante en la esquina
+- **Nombre del canal**: Texto grande y legible
+- **Título completo**: 2 líneas máximo, sin truncar agresivamente
+- **Estadísticas**:
+  - 👁 Viewers actuales (ej: 12,345)
+  - ⏱ Tiempo en vivo (ej: "En vivo desde hace 2h 34m")
+- **Indicadores**: Dots mostrando posición actual (ej: ● ● ○ ○)
 
-### 3. **Indicadores de Navegación**
-- **Dots de paginación**: Muestran cuántos streams hay y cuál está activo
-- **Navegación manual** (solo en controller): Botones anterior/siguiente
+### 3. **Animación de Transición**
+```
+Pantalla Actual                     Nueva Pantalla
+     100% opacity                        0% opacity
+          ↓                                  ↓
+     Fade out (0.5s)                   Esperando...
+          ↓                                  ↓
+      0% opacity                         0% opacity
+          ↓                                  ↓
+      (hidden)                        Fade in (0.5s)
+                                            ↓
+                                       100% opacity
+
+Total: 1s de transición suave
+```
+
+---
+
+## Ejemplo de Secuencia de Transición
+
+```
+T=0s - Mostrando Stream #1 (CodeWithMe)
+┌────────────────────────────────┐
+│  [Thumbnail: Coding setup]     │
+│                                │
+│  🔴 EN VIVO                    │  opacity: 100%
+│  📺 CodeWithMe                 │
+│  Building a REST API in Go     │
+│  👁 2,345  ⏱ 1h 23m           │
+│        ● ○ ○                   │
+└────────────────────────────────┘
+
+T=10s - Fade out inicia
+┌────────────────────────────────┐
+│  [Thumbnail: Coding setup]     │
+│                                │
+│  🔴 EN VIVO                    │  opacity: 50%
+│  📺 CodeWithMe                 │  (desapareciendo)
+│  Building a REST API in Go     │
+│  👁 2,345  ⏱ 1h 23m           │
+│        ● ○ ○                   │
+└────────────────────────────────┘
+
+T=10.5s - Fade out completo, preparando siguiente
+┌────────────────────────────────┐
+│                                │
+│                                │
+│                                │  opacity: 0%
+│         (vacío)                │  (cambio de contenido)
+│                                │
+│                                │
+│                                │
+└────────────────────────────────┘
+
+T=10.6s - Fade in del Stream #2 inicia
+┌────────────────────────────────┐
+│  [Thumbnail: Gaming screen]    │
+│                                │
+│  🔴 EN VIVO                    │  opacity: 30%
+│  📺 GamingPro                  │  (apareciendo)
+│  Valorant Ranked Grind         │
+│  👁 5,678  ⏱ 3h 45m           │
+│        ○ ● ○                   │
+└────────────────────────────────┘
+
+T=11s - Stream #2 completamente visible
+┌────────────────────────────────┐
+│  [Thumbnail: Gaming screen]    │
+│                                │
+│  🔴 EN VIVO                    │  opacity: 100%
+│  📺 GamingPro                  │
+│  Valorant Ranked Grind         │
+│  👁 5,678  ⏱ 3h 45m           │
+│        ○ ● ○                   │
+└────────────────────────────────┘
+
+... (espera 10 segundos) ...
+
+T=21s - Ciclo se repite hacia Stream #3
+```
 
 ---
 
 ## Posicionamiento en Overlay
 
-**Opción A - Esquina inferior derecha** (Recomendado)
+**Opción A - Centro derecho** (Recomendado)
 ```
-┌─────────────────────────────────────┐
-│  Logo            🔴 EN VIVO         │
-│                  SANTIAGO           │
-│                                     │
-│                                     │
-│                                     │
-│                                     │
-│ 📊 Indicadores      [YouTube] ←──  │
-│ UF: $38,234         Carousel        │
-│ UTM: $65,432                        │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│  🔴 EN VIVO                   Logo       │
+│  SANTIAGO                                │
+│                                          │
+│                    ┌──────────────────┐  │
+│                    │                  │  │
+│                    │   [Thumbnail]    │  │
+│                    │                  │  │
+│                    │  🔴 EN VIVO      │  │ ← YouTube Slideshow
+│                    │  📺 Canal        │  │   (pantalla completa)
+│                    │  Título Stream   │  │
+│                    │  👁 12K  ⏱ 2h   │  │
+│                    │     ● ○ ○        │  │
+│                    └──────────────────┘  │
+│ 📊 Indicadores                           │
+│ UF: $38,234                              │
+└──────────────────────────────────────────┘
 ```
 
-**Opción B - Centro inferior**
+**Opción B - Centro pantalla**
 ```
-┌─────────────────────────────────────┐
-│  Logo            🔴 EN VIVO         │
-│                  SANTIAGO           │
-│                                     │
-│                                     │
-│         [YouTube Carousel]          │
-│                                     │
-│ 📊 Indicadores                      │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│  🔴 EN VIVO                   Logo       │
+│  SANTIAGO                                │
+│                                          │
+│         ┌────────────────────┐           │
+│         │                    │           │
+│         │   [Thumbnail]      │           │
+│         │                    │           │
+│         │  🔴 EN VIVO        │           │ ← YouTube Slideshow
+│         │  📺 Canal          │           │   (centrado)
+│         │  Título Stream     │           │
+│         │  👁 12K  ⏱ 2h     │           │
+│         │      ● ○ ○         │           │
+│         └────────────────────┘           │
+│ 📊 Indicadores                           │
+└──────────────────────────────────────────┘
 ```
 
 ---
@@ -219,33 +312,56 @@ Controller                    Overlay
 
 ## Animaciones
 
-### Entrada del Widget
+### Entrada Inicial del Widget (Primera vez que aparece)
 ```
-1. Container: fadeInScaleY (0.6s) desde abajo
-2. Header: fadeInUp (0.5s) delay 0.2s
-3. Thumbnail: fadeIn (0.5s) delay 0.4s
-4. Info: fadeInUp (0.5s) delay 0.6s
-5. Dots: fadeIn (0.5s) delay 0.8s
+1. Todo el widget: fadeIn (0.8s)
+   - Toda la pantalla aparece suavemente desde opacity 0 → 1
 
-Total: 1.3s
+Total: 0.8s entrada suave
 ```
 
-### Rotación entre Streams
+### Transición entre Pantallas (Slideshow)
 ```
-1. Fade out current (0.3s)
-2. Slide out left (0.3s)
-3. Slide in right new stream (0.3s)
-4. Fade in new (0.3s)
+IMPORTANTE: Solo fade, sin movimientos laterales
 
-Total: 0.6s overlap animation
+Pantalla Actual (Stream 1):
+  opacity: 1
+  ↓
+  fadeOut (0.5s) → opacity: 0
+  ↓
+  display: none
+
+Nueva Pantalla (Stream 2):
+  display: block
+  opacity: 0
+  ↓
+  fadeIn (0.5s) → opacity: 1
+
+Total transición: 1s
 ```
 
-### Indicador LIVE
+### CSS Necesario
+```css
+.youtube-slide {
+  transition: opacity 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+.youtube-slide.active {
+  opacity: 1;
+}
+
+.youtube-slide.inactive {
+  opacity: 0;
+}
 ```
-Pulse scale animation (2s infinite)
-0% → 100%: scale(1)
-50%: scale(1.1)
-Opacity: 1 → 0.8 → 1
+
+### Badge "EN VIVO" Pulsante
+```
+Pulse animation (2s infinite)
+0%, 100%: scale(1), opacity: 1
+50%: scale(1.1), opacity: 0.85
+
+Color: #dc2626 (red-600)
 ```
 
 ---

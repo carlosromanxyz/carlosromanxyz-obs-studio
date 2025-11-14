@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Carousel Overlay</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#b1d900',   // Pear - Primary accent
+            'brand-accent': '#82a000',    // Apple Green - Secondary accent
+            'brand-dark': '#5c7000',      // Avocado - Dark variant
+            'brand-darker': '#525252',    // Davys Gray - Neutral gray
+            'brand-black': '#000000',     // Black - Maximum contrast
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* Carousel slide transitions - GPU accelerated (opacity only) */
+    .carousel-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+      pointer-events: none;
+    }
+
+    .carousel-slide.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Location indicator fade */
+    .location-indicator {
+      transition: opacity 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+    }
+
+    .location-indicator.fade-out {
+      opacity: 0;
+    }
+
+    /* Pulse animation for EN VIVO badge */
+    @keyframes pulse-live {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+      }
+    }
+
+    .pulse-live {
+      animation: pulse-live 2s ease-in-out infinite;
+    }
+
+    /* Smooth position transitions for aspect ratio changes */
+    .location-indicator {
+      transition: left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0),
+                  right 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0),
+                  opacity 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- YouTube Carousel Container (Fullscreen, z-0 background layer) -->
+  <div id="youtube-carousel" class="fixed inset-0 w-full h-full hidden">
+    <!-- Slides will be dynamically inserted here -->
+  </div>
+
+  <!-- Location Indicator Overlay (z-40 mid layer) -->
+  <div id="location-indicator" class="location-indicator fixed top-32 left-28 z-40 hidden">
+    <div class="flex rounded-lg border-2 border-brand-primary overflow-hidden bg-gradient-to-t from-zinc-900 to-black">
+      <!-- "EN VIVO" Label -->
+      <span class="pulse-live bg-gradient-to-t from-brand-dark to-brand-accent uppercase text-white px-8 py-2 text-2xl font-semibold whitespace-nowrap">
+        EN VIVO
+      </span>
+      <!-- Location Text -->
+      <span id="location-text" class="bg-gradient-to-t from-black to-zinc-900 text-white px-8 py-2 text-2xl whitespace-nowrap" style="font-family: Raleway, sans-serif;">
+        SANTIAGO
+      </span>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    let currentIndex = 0
+    let intervalId = null
+    let slides = []
+    let previousConfig = null
+    let previousAspectRatio = null
+
+    // Default config
+    const DEFAULT_CONFIG = {
+      isVisible: false,
+      intervalSeconds: 10,
+      videos: []
+    }
+
+    // Global config
+    const DEFAULT_GLOBAL_CONFIG = {
+      aspectRatio: '16:9'
+    }
+
+    // Load config from localStorage
+    function loadConfig() {
+      const saved = localStorage.getItem('obs-youtube-carousel-config')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+      return DEFAULT_CONFIG
+    }
+
+    // Load global config
+    function loadGlobalConfig() {
+      const saved = localStorage.getItem('obs-global-config')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+      return DEFAULT_GLOBAL_CONFIG
+    }
+
+    // Detect if state actually changed
+    function detectStateChange(prev, curr) {
+      if (prev === null) return true // First load
+      return prev.isVisible !== curr.isVisible ||
+             JSON.stringify(prev.videos) !== JSON.stringify(curr.videos) ||
+             prev.intervalSeconds !== curr.intervalSeconds
+    }
+
+    // Create iframe for YouTube video
+    function createVideoSlide(video, index) {
+      const slide = document.createElement('div')
+      slide.className = `carousel-slide ${index === 0 ? 'active' : ''}`
+      slide.dataset.index = index
+      slide.dataset.location = video.location || ''
+
+      const iframe = document.createElement('iframe')
+      iframe.width = '1920'
+      iframe.height = '1080'
+      iframe.src = `https://www.youtube-nocookie.com/embed/${video.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${video.videoId}&modestbranding=1&playsinline=1&rel=0&showinfo=0`
+      iframe.allow = 'autoplay; encrypted-media'
+      iframe.allowFullscreen = true
+      iframe.className = 'absolute inset-0 w-full h-full'
+      iframe.title = `YouTube Video ${index + 1}`
+
+      slide.appendChild(iframe)
+      return slide
+    }
+
+    // Build carousel from config
+    function buildCarousel(config) {
+      const carousel = document.getElementById('youtube-carousel')
+
+      // Clear existing slides
+      carousel.innerHTML = ''
+      slides = []
+
+      // Filter enabled videos
+      const enabledVideos = config.videos.filter(v => v.isEnabled !== false)
+
+      if (enabledVideos.length === 0) {
+        console.log('📺 YouTube Carousel: No enabled videos')
+        return
+      }
+
+      // Create slides
+      enabledVideos.forEach((video, index) => {
+        const slide = createVideoSlide(video, index)
+        carousel.appendChild(slide)
+        slides.push(slide)
+      })
+
+      // Reset to first slide
+      currentIndex = 0
+      updateLocation(enabledVideos[0].location || '')
+
+      console.log(`📺 YouTube Carousel: Built with ${slides.length} videos`)
+    }
+
+    // Transition to next slide
+    function nextSlide() {
+      const config = loadConfig()
+      const enabledVideos = config.videos.filter(v => v.isEnabled !== false)
+
+      if (slides.length === 0 || enabledVideos.length === 0) return
+
+      // Fade out current
+      slides[currentIndex].classList.remove('active')
+
+      // Update index
+      currentIndex = (currentIndex + 1) % slides.length
+
+      // Update location with fade
+      updateLocation(enabledVideos[currentIndex].location || '')
+
+      // Fade in next
+      setTimeout(() => {
+        slides[currentIndex].classList.add('active')
+      }, 100)
+
+      console.log(`📺 YouTube Carousel: Transitioned to slide ${currentIndex + 1}/${slides.length}`)
+    }
+
+    // Update location indicator with fade effect
+    function updateLocation(newLocation) {
+      const indicator = document.getElementById('location-indicator')
+      const locationText = document.getElementById('location-text')
+
+      // Fade out
+      indicator.classList.add('fade-out')
+
+      // Update text after fade out
+      setTimeout(() => {
+        locationText.textContent = newLocation || 'EN VIVO'
+        indicator.classList.remove('fade-out')
+      }, 500)
+    }
+
+    // Start autoplay
+    function startAutoplay(intervalSeconds) {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+
+      if (slides.length <= 1) {
+        console.log('📺 YouTube Carousel: Only 1 video, autoplay disabled')
+        return
+      }
+
+      intervalId = setInterval(() => {
+        nextSlide()
+      }, intervalSeconds * 1000)
+
+      console.log(`📺 YouTube Carousel: Autoplay started (${intervalSeconds}s interval)`)
+    }
+
+    // Stop autoplay
+    function stopAutoplay() {
+      if (intervalId) {
+        clearInterval(intervalId)
+        intervalId = null
+        console.log('📺 YouTube Carousel: Autoplay stopped')
+      }
+    }
+
+    // Apply config to overlay
+    function applyConfig() {
+      const config = loadConfig()
+      const globalConfig = loadGlobalConfig()
+
+      // Detect if this is an actual state change
+      const isStateChange = detectStateChange(previousConfig, config)
+      const isAspectRatioChange = previousAspectRatio !== globalConfig.aspectRatio
+
+      if (!isStateChange && !isAspectRatioChange && previousConfig !== null) {
+        return // Skip if polling with no change
+      }
+
+      const carousel = document.getElementById('youtube-carousel')
+      const indicator = document.getElementById('location-indicator')
+
+      // Update position based on aspect ratio
+      // 16:9 → left-28 (112px), 4:3 → left-96 (384px) - safe zone for 4:3
+      const baseClasses = 'location-indicator fixed top-32 z-40'
+      if (globalConfig.aspectRatio === '4:3') {
+        indicator.className = baseClasses + ' left-96'
+      } else {
+        indicator.className = baseClasses + ' left-28'
+      }
+
+      // Track aspect ratio changes
+      if (isAspectRatioChange) {
+        console.log('📺 YouTube Carousel - Aspect ratio changed to:', globalConfig.aspectRatio)
+        previousAspectRatio = globalConfig.aspectRatio
+      }
+
+      // Handle visibility
+      if (config.isVisible && config.videos.length > 0) {
+        // Rebuild carousel if videos changed
+        if (isStateChange) {
+          buildCarousel(config)
+        }
+
+        carousel.classList.remove('hidden')
+        indicator.classList.remove('hidden')
+        startAutoplay(config.intervalSeconds)
+      } else {
+        carousel.classList.add('hidden')
+        indicator.classList.add('hidden')
+        stopAutoplay()
+      }
+
+      // Store current config as previous for next comparison
+      previousConfig = { ...config }
+
+      console.log('📺 YouTube Carousel overlay updated:', config)
+    }
+
+    // Listen for storage changes (when controller updates config)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'obs-youtube-carousel-config' || e.key === 'obs-global-config') {
+        applyConfig()
+      }
+    })
+
+    // Polling fallback (in case storage event doesn't fire)
+    setInterval(() => {
+      applyConfig()
+    }, 1000)
+
+    // Apply initial config
+    window.addEventListener('DOMContentLoaded', () => {
+      applyConfig()
+    })
+  </script>
+</body>
+</html>

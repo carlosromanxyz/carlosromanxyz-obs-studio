@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lower Third Overlay</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#b1d900',   // Pear - Primary accent
+            'brand-accent': '#82a000',    // Apple Green - Secondary accent
+            'brand-dark': '#5c7000',      // Avocado - Dark variant
+            'brand-darker': '#525252',    // Davys Gray - Neutral gray
+            'brand-black': '#000000',     // Black - Maximum contrast
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* Sequential entrance animations - GPU accelerated (height, opacity, transform only) */
+
+    /* First line (top bar) animation */
+    @keyframes expandFirstLine {
+      from {
+        height: 0;
+        opacity: 0;
+      }
+      to {
+        height: 4rem;
+        opacity: 1;
+      }
+    }
+
+    .first-line-enter {
+      animation: expandFirstLine 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+    }
+
+    /* Second line (bottom bar) animation - delayed */
+    @keyframes expandSecondLine {
+      from {
+        height: 0;
+        opacity: 0;
+      }
+      to {
+        height: 3rem;
+        opacity: 1;
+      }
+    }
+
+    .second-line-enter {
+      animation: expandSecondLine 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.5s forwards;
+    }
+
+    /* Text fade in animations */
+    @keyframes fadeInText {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .text-fade-in-first {
+      animation: fadeInText 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.1s forwards;
+    }
+
+    .text-fade-in-second {
+      animation: fadeInText 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0) 0.6s forwards;
+    }
+
+    /* Exit animations */
+    @keyframes collapseOut {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
+    }
+
+    .lowerthird-exit {
+      animation: collapseOut 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0) forwards;
+    }
+
+    /* Initial hidden state */
+    .first-line,
+    .second-line {
+      height: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
+
+    .first-line-text,
+    .second-line-text {
+      opacity: 0;
+    }
+
+    /* Smooth position transitions for aspect ratio changes */
+    #lowerthird-container {
+      transition: left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0),
+                  right 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Lower Third Container (z-50 - top layer, below only OBS UI) -->
+  <div id="lowerthird-container" class="flex flex-col items-center absolute bottom-28 left-0 right-0 z-50 justify-center hidden" style="font-family: 'Open Sans', sans-serif;">
+
+    <!-- First Line (Top) - Black gradient with brand-primary border -->
+    <div class="first-line bg-gradient-to-t from-zinc-900 to-black border-brand-primary rounded-t-2xl border-2 px-12 flex items-center z-10 overflow-hidden whitespace-nowrap transition-all duration-500 ease-in-out">
+      <span class="first-line-text text-white text-4xl uppercase font-semibold" style="font-family: Barlow, sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+        CARLOS ROMÁN
+      </span>
+    </div>
+
+    <!-- Second Line (Bottom) - Brand-primary gradient with brand-primary border -->
+    <div class="second-line bg-gradient-to-t from-brand-dark to-brand-accent rounded-b-2xl border-t-0 border-brand-primary border-2 px-12 z-0 flex items-center transition-all duration-500 ease-in-out">
+      <span class="second-line-text text-white text-2xl lowercase" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8); opacity: 0.8;">
+        full stack developer
+      </span>
+    </div>
+
+  </div>
+
+  <script>
+    // State management
+    let previousConfig = null
+    let previousAspectRatio = null
+    let autoHideTimeout = null
+
+    // Default config
+    const DEFAULT_CONFIG = {
+      textFirstLine: 'CARLOS ROMÁN',
+      textSecondLine: 'full stack developer',
+      isVisible: false,
+      duration: 0  // 0 = no auto-hide, otherwise milliseconds
+    }
+
+    // Global config
+    const DEFAULT_GLOBAL_CONFIG = {
+      aspectRatio: '16:9'
+    }
+
+    // Load config from localStorage
+    function loadConfig() {
+      const saved = localStorage.getItem('obs-lowerthird-config')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+      return DEFAULT_CONFIG
+    }
+
+    // Load global config
+    function loadGlobalConfig() {
+      const saved = localStorage.getItem('obs-global-config')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+      return DEFAULT_GLOBAL_CONFIG
+    }
+
+    // Detect if state actually changed
+    function detectStateChange(prev, curr) {
+      if (prev === null) return true // First load
+      return prev.isVisible !== curr.isVisible ||
+             prev.textFirstLine !== curr.textFirstLine ||
+             prev.textSecondLine !== curr.textSecondLine ||
+             prev.duration !== curr.duration
+    }
+
+    // Play entrance animation
+    function playEntranceAnimation() {
+      const container = document.getElementById('lowerthird-container')
+      const firstLine = container.querySelector('.first-line')
+      const secondLine = container.querySelector('.second-line')
+      const firstText = container.querySelector('.first-line-text')
+      const secondText = container.querySelector('.second-line-text')
+
+      // Remove exit animation if present
+      container.classList.remove('lowerthird-exit')
+
+      // Reset to initial state
+      firstLine.classList.remove('first-line-enter')
+      secondLine.classList.remove('second-line-enter')
+      firstText.classList.remove('text-fade-in-first')
+      secondText.classList.remove('text-fade-in-second')
+
+      // Force reflow
+      void firstLine.offsetWidth
+
+      // Apply entrance animations
+      firstLine.classList.add('first-line-enter')
+      secondLine.classList.add('second-line-enter')
+      firstText.classList.add('text-fade-in-first')
+      secondText.classList.add('text-fade-in-second')
+
+      console.log('📺 Lower Third: Entrance animation played')
+    }
+
+    // Play exit animation
+    function playExitAnimation() {
+      const container = document.getElementById('lowerthird-container')
+
+      // Apply exit animation
+      container.classList.add('lowerthird-exit')
+
+      // Hide after animation completes
+      setTimeout(() => {
+        container.classList.add('hidden')
+        container.classList.remove('lowerthird-exit')
+
+        // Reset animation classes
+        const firstLine = container.querySelector('.first-line')
+        const secondLine = container.querySelector('.second-line')
+        const firstText = container.querySelector('.first-line-text')
+        const secondText = container.querySelector('.second-line-text')
+
+        firstLine.classList.remove('first-line-enter')
+        secondLine.classList.remove('second-line-enter')
+        firstText.classList.remove('text-fade-in-first')
+        secondText.classList.remove('text-fade-in-second')
+      }, 400)
+
+      console.log('📺 Lower Third: Exit animation played')
+    }
+
+    // Update text content
+    function updateText(firstLine, secondLine) {
+      const firstText = document.querySelector('.first-line-text')
+      const secondText = document.querySelector('.second-line-text')
+
+      firstText.textContent = firstLine || 'CARLOS ROMÁN'
+      secondText.textContent = secondLine || 'full stack developer'
+    }
+
+    // Setup auto-hide timeout
+    function setupAutoHide(duration) {
+      // Clear existing timeout
+      if (autoHideTimeout) {
+        clearTimeout(autoHideTimeout)
+        autoHideTimeout = null
+      }
+
+      // If duration is 0, don't auto-hide
+      if (!duration || duration === 0) return
+
+      // Setup new timeout
+      autoHideTimeout = setTimeout(() => {
+        console.log('📺 Lower Third: Auto-hiding after', duration, 'ms')
+        const config = loadConfig()
+        config.isVisible = false
+
+        // Save to trigger hide without modifying user's config
+        // (just trigger the animation locally)
+        playExitAnimation()
+      }, duration)
+    }
+
+    // Apply config to overlay
+    function applyConfig() {
+      const config = loadConfig()
+      const globalConfig = loadGlobalConfig()
+
+      // Detect if this is an actual state change
+      const isStateChange = detectStateChange(previousConfig, config)
+      const isAspectRatioChange = previousAspectRatio !== globalConfig.aspectRatio
+
+      if (!isStateChange && !isAspectRatioChange && previousConfig !== null) {
+        return // Skip if polling with no change
+      }
+
+      const container = document.getElementById('lowerthird-container')
+
+      // Update position based on aspect ratio (currently centered, no aspect ratio adjustment needed)
+      // But keep the transition class for future use
+      if (isAspectRatioChange) {
+        console.log('📺 Lower Third - Aspect ratio changed to:', globalConfig.aspectRatio)
+        previousAspectRatio = globalConfig.aspectRatio
+      }
+
+      // Detect entrance transition (false → true or initial load)
+      const wasHidden = !previousConfig || !previousConfig.isVisible
+      const isNowVisible = config.isVisible
+
+      // Handle visibility and text changes
+      if (isNowVisible) {
+        // Update text
+        updateText(config.textFirstLine, config.textSecondLine)
+
+        container.classList.remove('hidden')
+
+        // Play entrance animation on first show or text change
+        if (wasHidden ||
+            (previousConfig &&
+             (previousConfig.textFirstLine !== config.textFirstLine ||
+              previousConfig.textSecondLine !== config.textSecondLine))) {
+          playEntranceAnimation()
+        }
+
+        // Setup auto-hide if configured
+        setupAutoHide(config.duration)
+
+      } else {
+        if (previousConfig && previousConfig.isVisible) {
+          // Was visible, now hiding - play exit animation
+          playExitAnimation()
+        } else {
+          // Already hidden
+          container.classList.add('hidden')
+        }
+
+        // Clear auto-hide timeout
+        if (autoHideTimeout) {
+          clearTimeout(autoHideTimeout)
+          autoHideTimeout = null
+        }
+      }
+
+      // Store current config as previous for next comparison
+      previousConfig = { ...config }
+
+      console.log('📺 Lower Third overlay updated:', config)
+    }
+
+    // Listen for storage changes (when controller updates config)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'obs-lowerthird-config' || e.key === 'obs-global-config') {
+        applyConfig()
+      }
+    })
+
+    // Polling fallback (in case storage event doesn't fire)
+    setInterval(() => {
+      applyConfig()
+    }, 1000)
+
+    // Apply initial config
+    window.addEventListener('DOMContentLoaded', () => {
+      applyConfig()
+    })
+  </script>
+</body>
+</html>

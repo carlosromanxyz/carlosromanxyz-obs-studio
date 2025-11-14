@@ -28,8 +28,8 @@
 </head>
 <body class="bg-zinc-900 text-white p-4 min-h-screen space-y-2">
 
-  <!-- OBS Status Badge -->
-  <div class="flex justify-end mb-2">
+  <!-- OBS Status Badge (fixed position) -->
+  <div class="fixed bottom-2 right-2 z-50">
     <span id="status" class="px-2 py-0.5 text-[10px] font-medium rounded bg-yellow-900/50 text-yellow-400 border border-yellow-700/50">
       Disconnected
     </span>
@@ -160,6 +160,148 @@
     </div>
   </div>
 
+  <!-- YouTube Carousel Accordion -->
+  <div class="border border-zinc-700 rounded-lg overflow-hidden">
+    <!-- Header with Toggle -->
+    <div class="flex items-center gap-3 p-3 bg-zinc-800 hover:bg-zinc-700 transition-colors">
+      <span class="text-sm font-medium flex-1 cursor-pointer" onclick="toggleAccordion('youtube')">YouTube Carousel</span>
+      <!-- Toggle Switch -->
+      <label class="relative cursor-pointer">
+        <input
+          type="checkbox"
+          id="youtube-toggle"
+          class="sr-only peer"
+          onchange="handleYoutubeToggle(this.checked)"
+        >
+        <div class="w-11 h-6 bg-zinc-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary"></div>
+      </label>
+      <!-- Chevron -->
+      <svg id="youtube-chevron" class="w-4 h-4 text-zinc-400 transition-transform duration-200 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="toggleAccordion('youtube')">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </div>
+    <!-- Content -->
+    <div id="youtube-content" class="bg-zinc-800/50 border-t border-zinc-700 hidden">
+      <div class="p-3 space-y-3">
+
+        <!-- Interval Setting -->
+        <label class="block">
+          <span class="text-sm text-zinc-300 font-medium">Intervalo de rotación</span>
+          <div class="flex items-center gap-2 mt-1">
+            <input
+              type="number"
+              id="youtube-interval"
+              min="5"
+              max="60"
+              value="10"
+              onchange="handleYoutubeIntervalChange(this.value)"
+              class="flex-1 px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+            >
+            <span class="text-xs text-zinc-400 whitespace-nowrap">segundos</span>
+          </div>
+        </label>
+
+        <!-- Videos List -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-zinc-300 font-medium">Videos (<span id="youtube-count">0</span>)</span>
+          </div>
+
+          <!-- Videos Container -->
+          <div id="youtube-videos-list" class="space-y-2 max-h-64 overflow-y-auto">
+            <div class="text-xs text-zinc-400 text-center py-4">
+              No hay videos configurados.<br>
+              Haz clic en "Agregar Video" para comenzar.
+            </div>
+          </div>
+
+          <!-- Add Video Button -->
+          <button
+            onclick="handleYoutubeAddVideo()"
+            class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-brand-primary hover:bg-brand-accent text-black font-medium rounded transition-colors text-sm"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Agregar Video</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Lower Third Accordion -->
+  <div class="border border-zinc-700 rounded-lg overflow-hidden">
+    <!-- Header with Toggle -->
+    <div class="flex items-center gap-3 p-3 bg-zinc-800 hover:bg-zinc-700 transition-colors">
+      <span class="text-sm font-medium flex-1 cursor-pointer" onclick="toggleAccordion('lowerthird')">Lower Third</span>
+      <!-- Toggle Switch -->
+      <label class="relative cursor-pointer">
+        <input
+          type="checkbox"
+          id="lowerthird-toggle"
+          class="sr-only peer"
+          onchange="handleLowerthirdToggle(this.checked)"
+        >
+        <div class="w-11 h-6 bg-zinc-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-primary rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary"></div>
+      </label>
+      <!-- Chevron -->
+      <svg id="lowerthird-chevron" class="w-4 h-4 text-zinc-400 transition-transform duration-200 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="toggleAccordion('lowerthird')">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </div>
+    <!-- Content -->
+    <div id="lowerthird-content" class="bg-zinc-800/50 border-t border-zinc-700 hidden">
+      <div class="p-3 space-y-3">
+
+        <!-- First Line Input -->
+        <label class="block">
+          <span class="text-xs text-zinc-400 mb-1.5 block">Primera línea (uppercase)</span>
+          <input
+            type="text"
+            id="lowerthird-first-line"
+            placeholder="CARLOS ROMÁN"
+            maxlength="30"
+            class="w-full px-3 py-2 bg-zinc-700 text-white rounded border border-zinc-600 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary text-sm uppercase"
+            oninput="handleTextFirstLineInput(this.value)"
+          >
+        </label>
+
+        <!-- Second Line Input -->
+        <label class="block">
+          <span class="text-xs text-zinc-400 mb-1.5 block">Segunda línea (lowercase)</span>
+          <input
+            type="text"
+            id="lowerthird-second-line"
+            placeholder="full stack developer"
+            maxlength="40"
+            class="w-full px-3 py-2 bg-zinc-700 text-white rounded border border-zinc-600 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary text-sm lowercase"
+            oninput="handleTextSecondLineInput(this.value)"
+          >
+        </label>
+
+        <!-- Duration Setting -->
+        <label class="block">
+          <span class="text-xs text-zinc-400 mb-1.5 block">Duración de auto-ocultar</span>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              id="lowerthird-duration"
+              min="0"
+              step="1000"
+              value="0"
+              onchange="handleDurationChange(this.value)"
+              class="flex-1 px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+            >
+            <span class="text-xs text-zinc-400 whitespace-nowrap">ms (0 = siempre visible)</span>
+          </div>
+        </label>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Global Settings Accordion -->
   <div class="border border-zinc-700 rounded-lg overflow-hidden">
     <!-- Header -->
@@ -203,6 +345,8 @@
   <script src="../js/live-widget.js"></script>
   <script src="../js/indicators-data.js"></script>
   <script src="../js/indicators-widget.js"></script>
+  <script src="../js/youtube-carousel-widget.js"></script>
+  <script src="../js/lowerthird-widget.js"></script>
   <script src="../js/aspect-ratio-widget.js"></script>
 
   <!-- Initialize -->
@@ -211,6 +355,8 @@
       initLogoWidget()
       initLiveWidget()
       initIndicatorsWidget()
+      initYoutubeWidget()
+      initLowerthirdWidget()
       initAspectRatioWidget()
       connectOBS()
     })

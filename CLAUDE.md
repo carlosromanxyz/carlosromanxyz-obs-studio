@@ -30,6 +30,7 @@ python3 server/serve.py
 open http://localhost:8080/widgets/overlays/logo-overlay.html
 open http://localhost:8080/widgets/overlays/live-overlay.html
 open http://localhost:8080/widgets/overlays/indicators-overlay.html
+open http://localhost:8080/widgets/overlays/youtube-carousel-overlay.html
 
 # Test unified controller
 open http://localhost:8080/widgets/controllers/overlays-controller.html
@@ -66,19 +67,24 @@ carlosromanxyz-obs-studio/
 │   ├── overlays/                     # OBS Browser Source visuals
 │   │   ├── logo-overlay.html         # Logo widget overlay
 │   │   ├── live-overlay.html         # Live indicator overlay
-│   │   └── indicators-overlay.html   # Economic indicators overlay
+│   │   ├── indicators-overlay.html   # Economic indicators overlay
+│   │   └── youtube-carousel-overlay.html  # YouTube carousel overlay
 │   └── js/                           # Widget logic modules
 │       ├── logo-widget.js            # Logo widget controller logic
 │       ├── live-widget.js            # Live widget controller logic
 │       ├── indicators-widget.js      # Economic indicators controller logic
 │       ├── indicators-data.js        # Economic indicators API utility
+│       ├── youtube-carousel-widget.js  # YouTube carousel controller logic
+│       ├── aspect-ratio-widget.js    # Global aspect ratio controller
 │       ├── obs-connection.js         # OBS WebSocket connection
 │       └── accordion.js              # Accordion UI utility
 ├── server/
 │   ├── serve.js                      # Node.js HTTP server (CORS enabled)
 │   └── serve.py                      # Python HTTP server alternative
 ├── docs/
-│   └── SETUP.md                      # Detailed setup instructions
+│   ├── SETUP.md                      # Detailed setup instructions
+│   ├── YOUTUBE-CAROUSEL-PROPOSAL.md  # Original carousel proposal
+│   └── YOUTUBE-CAROUSEL-ADAPTED.md   # Adapted implementation guide
 ├── package.json
 └── README.md
 ```
@@ -227,8 +233,8 @@ Follow this step-by-step process:
 ## Common Implementation Patterns
 
 See reference implementations:
-- **Overlays**: `logo-overlay.html` (animated element), `live-overlay.html` (text input, aspect ratio), `indicators-overlay.html` (external API data display)
-- **Widget Modules**: `logo-widget.js` (toggle controls), `live-widget.js` (debounced text input), `indicators-widget.js` (async data fetching)
+- **Overlays**: `logo-overlay.html` (animated element), `live-overlay.html` (text input, aspect ratio), `indicators-overlay.html` (external API data display), `youtube-carousel-overlay.html` (fullscreen video carousel with fade transitions)
+- **Widget Modules**: `logo-widget.js` (toggle controls), `live-widget.js` (debounced text input), `indicators-widget.js` (async data fetching), `youtube-carousel-widget.js` (dynamic list management)
 - **Data Utilities**: `indicators-data.js` (external API fetching with 4-hour cache-first strategy)
 - **Shared Utilities**: `accordion.js` (accordion UI), `obs-connection.js` (optional WebSocket)
 
@@ -243,6 +249,25 @@ When fetching external data, follow this cache-first pattern:
 2. **Widget Module** imports data utility and handles UI state (loading, errors)
 3. **Overlay** displays data from config, refreshed via polling
 4. **Controller** triggers refresh via button, shows last updated time
+
+### Dynamic Content Carousel Pattern (YouTube Carousel)
+For carousel/slideshow widgets with multiple items:
+1. **Overlay** (`youtube-carousel-overlay.html`):
+   - Dynamically build slides from config array
+   - Use CSS transitions for fade effects (GPU-accelerated)
+   - Implement autoplay with setInterval
+   - Handle slide transitions with opacity changes
+   - Sync location indicator with current slide
+2. **Widget Module** (`youtube-carousel-widget.js`):
+   - Manage array of items in config
+   - Implement add/remove/toggle functions
+   - Dynamically render list UI
+   - Validate user input (video IDs, etc.)
+3. **Key Patterns**:
+   - Store items as array in config: `{ videos: [{videoId, location, isEnabled}, ...] }`
+   - Filter enabled items before rendering: `videos.filter(v => v.isEnabled !== false)`
+   - Use data attributes for item tracking: `data-index="${index}"`
+   - Rebuild DOM when config changes
 
 ## Troubleshooting
 
@@ -290,12 +315,11 @@ Current widgets in production:
 - **Logo Widget** (`logo-overlay.html` + `logo-widget.js`) - Animated logo with text toggle
 - **Live Widget** (`live-overlay.html` + `live-widget.js`) - "EN VIVO" indicator with location text
 - **Economic Indicators Widget** (`indicators-overlay.html` + `indicators-widget.js` + `indicators-data.js`) - Chilean economic indicators (UF, UTM, IPC, Dólar) from Boostr API with 4-hour caching
+- **YouTube Carousel Widget** (`youtube-carousel-overlay.html` + `youtube-carousel-widget.js`) - Fullscreen YouTube video carousel with fade transitions and location indicator
 
 Planned widgets:
 - Lower Third Graphics
-- YouTube Carousel (Streamlink integration)
 
 Future enhancements:
-- Global settings widget (aspect ratio, theme customization)
 - Scene-specific widget profiles
 - Configuration import/export
